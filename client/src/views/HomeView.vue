@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import TheWelcome from '../components/TheWelcome.vue'
+import Dashboard from '../components/Dashboard.vue'
 </script>
 
 <template>
-  <main>
-    <TheWelcome />
+  <main class="home-view">
+    <Dashboard />
   </main>
 </template>
+
+<style scoped>
+.home-view {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+</style>

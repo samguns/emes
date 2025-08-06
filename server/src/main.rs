@@ -1,6 +1,7 @@
 use rmcp::transport::streamable_http_server::{
     StreamableHttpService, session::local::LocalSessionManager,
 };
+use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::qwen2_vl::qwen2_vl_service::Qwen2VLService;
@@ -25,7 +26,15 @@ async fn main() -> anyhow::Result<()> {
         Default::default(),
     );
 
-    let router = axum::Router::new().nest_service("/mcp", service);
+    let cors = CorsLayer::new()
+        .allow_methods(Any)
+        .allow_headers(Any)
+        .allow_origin(AllowOrigin::any())
+        .expose_headers(Any);
+
+    let router = axum::Router::new()
+        .nest_service("/mcp", service)
+        .layer(cors);
     let tcp_listener = tokio::net::TcpListener::bind(SERVER_ADDR).await?;
     tracing::info!("Server is running on {}", SERVER_ADDR);
     let _ = axum::serve(tcp_listener, router)
