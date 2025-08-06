@@ -3,6 +3,18 @@ import { ref } from 'vue';
 import ChatInterface from './ChatInterface.vue';
 import ToolExplorer from './ToolExplorer.vue';
 import ResourceBrowser from './ResourceBrowser.vue';
+import playMusic from './playMusic.vue';
+
+// 控制playMusic组件的显示
+const showPlayMusic = ref(false);
+
+function handleClickPlayMusic() {
+  if (!showPlayMusic.value) {
+    showPlayMusic.value = true;
+  } else {
+    showPlayMusic.value = false;
+  }
+}
 
 // State
 const activeTab = ref<'chat' | 'tools' | 'resources'>('chat');
@@ -20,30 +32,20 @@ function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
     </div>
     
     <div class="dashboard-content">
-      <div class="card">
-        <h2>Summary</h2>
-        <p>Welcome to your mobile-friendly dashboard!</p>
-      </div>
       
       <div class="card">
-        <h2>Activity</h2>
-        <div class="activity-item">
-          <div class="activity-icon">📊</div>
-          <div class="activity-details">
-            <h3>Recent Activity</h3>
-            <p>No recent activities to display</p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card">
-        <h2>Quick Actions</h2>
+        <!-- <h2>Quick Actions</h2> -->
         <div class="action-buttons">
-          <button class="action-button">Action 1</button>
+          <button class="action-button" @click="handleClickPlayMusic">播放音乐</button>
           <button class="action-button">Action 2</button>
           <button class="action-button">Action 3</button>
         </div>
       </div>
+    </div>
+
+    <!-- 播放音乐组件 -->
+    <div v-if="showPlayMusic" class="music-container">
+      <playMusic />
     </div>
   </div>
 </template>
@@ -75,6 +77,11 @@ function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.music-container {
+  margin-top: 1rem;
+  width: 100%;
 }
 
 .card {
@@ -120,7 +127,7 @@ function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
 
 .action-button {
   background-color: var(--color-primary);
-  color: white;
+  /* color: white; */
   border: none;
   border-radius: 4px;
   padding: 0.5rem;
