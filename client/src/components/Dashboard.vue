@@ -30,9 +30,9 @@ function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
     <div class="dashboard-header">
       <h1>宸宝的智能助手</h1>
     </div>
-    
+
     <div class="dashboard-content">
-      
+
       <div class="card">
         <!-- <h2>Quick Actions</h2> -->
         <div class="action-buttons">
