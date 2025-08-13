@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
 import ChatInterface from './ChatInterface.vue';
 import ToolExplorer from './ToolExplorer.vue';
 import ResourceBrowser from './ResourceBrowser.vue';
-import playMusic from './playMusic.vue';
 
-// 控制playMusic组件的显示
-const showPlayMusic = ref(false);
+// 路由实例
+const router = useRouter();
+
 
 function handleClickPlayMusic() {
-  if (!showPlayMusic.value) {
-    showPlayMusic.value = true;
-  } else {
-    showPlayMusic.value = false;
-  }
+  router.push('/music-player');
 }
 
+// 处理Action 2点击事件，跳转到上传页面
+function handleAction2Click() {
+  router.push('/upload');
+}
+
+
 // State
-const activeTab = ref<'chat' | 'tools' | 'resources'>('chat');
+//const activeTab = ref<'chat' | 'tools' | 'resources'>('chat');
 
 // Methods
 function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
@@ -37,16 +40,16 @@ function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
         <!-- <h2>Quick Actions</h2> -->
         <div class="action-buttons">
           <button class="action-button" @click="handleClickPlayMusic">播放音乐</button>
-          <button class="action-button">Action 2</button>
+          <button class="action-button" @click="handleAction2Click">Action 2</button>
           <button class="action-button">Action 3</button>
         </div>
       </div>
     </div>
 
-    <!-- 播放音乐组件 -->
-    <div v-if="showPlayMusic" class="music-container">
+    <!-- 音乐播放组件已移除，改为路由导航 -->
+    <!-- <div v-if="showPlayMusic" class="music-container">
       <playMusic />
-    </div>
+    </div> -->
   </div>
 </template>
 
