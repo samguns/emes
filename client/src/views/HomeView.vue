@@ -15,5 +15,6 @@ import Dashboard from '../components/Dashboard.vue'
   padding: 0;
   margin: 0;
   background: linear-gradient(135deg, #66ead8 0%, #04ff3f 100%);
+  overflow-y: auto;
 }
 </style>

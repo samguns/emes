@@ -14,7 +14,7 @@ function handleClickPlayMusic() {
 }
 
 // 处理Action 2点击事件，跳转到上传页面
-function handleAction2Click() {
+function handleClickUpload() {
   router.push('/upload');
 }
 
@@ -23,9 +23,9 @@ function handleAction2Click() {
 //const activeTab = ref<'chat' | 'tools' | 'resources'>('chat');
 
 // Methods
-function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
-  activeTab.value = tab;
-}
+// function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
+//   activeTab.value = tab;
+// }
 </script>
 
 <template>
@@ -40,7 +40,7 @@ function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
         <!-- <h2>Quick Actions</h2> -->
         <div class="action-buttons">
           <button class="action-button" @click="handleClickPlayMusic">播放音乐</button>
-          <button class="action-button" @click="handleAction2Click">Action 2</button>
+          <button class="action-button" @click="handleClickUpload">上传音乐</button>
           <button class="action-button">Action 3</button>
         </div>
       </div>
