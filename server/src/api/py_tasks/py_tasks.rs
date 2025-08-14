@@ -1,14 +1,11 @@
 use axum::extract::State;
-use std::sync::Arc;
 use pyo3::prelude::*;
 use pyo3::types::PyModule;
+use std::sync::Arc;
 
 use crate::app_state::AppState;
 
-
-pub async fn greet(
-    State(app_state): State<Arc<AppState>>,
-) -> String {
+pub async fn greet(State(app_state): State<Arc<AppState>>) -> String {
     let g = Python::with_gil(|py| {
         let greet = PyModule::import(py, "greet");
         if let Err(e) = greet {

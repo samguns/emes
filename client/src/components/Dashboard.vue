@@ -31,7 +31,7 @@ function handleClickUpload() {
 <template>
   <div class="dashboard">
     <div class="dashboard-header">
-      <h1>宸宝的智能助手</h1>
+      <h1>智能助手</h1>
     </div>
 
     <div class="dashboard-content">

@@ -1,7 +1,7 @@
+use pyo3::prelude::*;
 use std::sync::Arc;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use pyo3::prelude::*;
 
 // use crate::qwen2_vl::qwen2_vl_service::Qwen2VLService;
 // Remove unresolved imports and fix module usage

@@ -86,6 +86,7 @@
   <script setup lang="ts">
   import { ref } from 'vue'
   import { useQuasar } from 'quasar'
+import axios from 'axios'
   
   interface UploadStatus {
     type: 'success' | 'error'
@@ -172,15 +173,30 @@
         const formData = new FormData()
         formData.append('file', file)
   
-        const response = await fetch(UPLOAD_URL, {
-          method: 'POST',
-          body: formData,
-        })
-  
-        if (!response.ok) {
+        // A "network error" in axios usually means the request could not reach the server at all,
+        // often due to CORS issues, server not running, wrong URL, or network connectivity problems.
+        // It is NOT a normal HTTP error (like 404 or 500), but a failure to make the request.
+        // To help debug, you can add a try/catch here and log the error details:
+        let response;
+        try {
+          response = await axios.post(UPLOAD_URL, formData, {
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+        } catch (err) {
+          // Axios "network error" is usually in err.message and err.request
+          console.error('Axios network error:', err);
+          throw err; // rethrow so the outer catch handles it
+        }
+
+        // Axios responses do not have an 'ok' property like fetch.
+        // Instead, check for a 2xx status code.
+        if (response.status < 200 || response.status >= 300) {
           throw new Error(`Upload failed for ${file.name}: ${response.statusText}`)
         }
-  
+
         completedFiles++
         uploadProgress.value = completedFiles / totalFiles
       }
