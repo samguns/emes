@@ -13,7 +13,7 @@ use tokio::fs::OpenOptions;
 use tokio::io::BufWriter;
 use tokio_util::io::StreamReader;
 
-use crate::api::utils::SuccessResponse;
+use crate::api::utils::{FailureResponse, SuccessResponse};
 use crate::app_state::AppState;
 use crate::dao::file_dao;
 
@@ -135,6 +135,8 @@ impl IntoResponse for UploadError {
                 (StatusCode::CONFLICT, "File already exists".to_string())
             }
         };
-        (status, error_msg).into_response()
+
+        let failure_response = FailureResponse::new(&error_msg);
+        (status, axum::Json(failure_response)).into_response()
     }
 }

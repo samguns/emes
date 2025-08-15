@@ -29,7 +29,7 @@ impl FileDao {
             .fetch_one(&mut *tx)
             .await;
         if let Err(e) = file_query {
-            tracing::error!("Failed to query file by name: {}", e);
+            // tracing::error!("Failed to query file by name: {}", e);
             return None;
         }
 
@@ -65,7 +65,10 @@ impl FileDao {
             return Err(e);
         }
 
-        tx.commit().await.expect("Failed to commit transaction");
+        if let Err(e) = tx.commit().await {
+            tracing::error!("Failed to commit transaction: {}", e);
+            return Err(e);
+        }
 
         Ok(())
     }
