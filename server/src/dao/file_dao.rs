@@ -40,7 +40,8 @@ impl FileDao {
             name: file_query.get("name"),
             size: file_query.get("size"),
             path: file_query.get("path"),
-            label: file_query.get("label"),
+            class: file_query.get("class"),
+            is_training_data: file_query.get("is_training_data"),
             created_at: file_query.get("created_at"),
         })
     }
@@ -51,12 +52,12 @@ impl FileDao {
         let mut tx = conn.begin().await.unwrap();
 
         let insert_query = sqlx::query(
-            "INSERT INTO file (name, size, path, label, created_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO file (name, size, path, class, created_at) VALUES (?, ?, ?, ?, ?)",
         )
         .bind(file_entry.name)
         .bind(file_entry.size)
         .bind(file_entry.path)
-        .bind(file_entry.label)
+        .bind(file_entry.class)
         .bind(file_entry.created_at);
 
         let insert_query = insert_query.execute(&mut *tx).await;
@@ -91,7 +92,8 @@ impl FileDao {
                     name TEXT KEY NOT NULL,
                     size REAL NOT NULL,
                     path TEXT NOT NULL,
-                    label TEXT NOT NULL,
+                    class INTEGER NOT NULL,
+                    is_training_data BOOLEAN NOT NULL DEFAULT 0,
                     created_at REAL NOT NULL,
                     UNIQUE (name)
                 )",
@@ -111,6 +113,7 @@ pub struct FileEntry {
     pub name: String,
     pub size: f64,
     pub path: String,
-    pub label: String,
+    pub class: i32,
+    pub is_training_data: Option<bool>,
     pub created_at: f64,
 }

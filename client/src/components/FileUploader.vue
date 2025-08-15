@@ -21,6 +21,36 @@
             </div>
           </div>
   
+          <!-- Label Selection -->
+          <div class="q-mt-md">
+            <div class="text-subtitle2 q-mb-sm">类型</div>
+
+            <q-select class="q-mb-sm"
+              v-model="selectedLabel"
+              :options="[
+                {
+                  label: '助眠音乐',
+                  value: 0
+                },
+                {
+                  label: '活力音乐',
+                  value: 1
+                },
+                {
+                  label: '运动音乐',
+                  value: 2
+                },
+                {
+                  label: '其他',
+                  value: 3
+                }
+              ]"
+              label="选择类型"
+              dense
+              bordered
+            />
+          </div>
+
           <!-- Selected Files Display -->
           <div v-if="selectedFiles.length > 0" class="q-mt-md">
             <div class="text-subtitle2 q-mb-sm">Selected Files:</div>
@@ -83,11 +113,11 @@
     </div>
   </template>
   
-  <script setup lang="ts">
+<script setup lang="ts">
   import { ref } from 'vue'
   import { useQuasar } from 'quasar'
-import axios from 'axios'
-  
+  import axios from 'axios'
+
   interface UploadStatus {
     type: 'success' | 'error'
     message: string
@@ -101,6 +131,10 @@ import axios from 'axios'
   const isUploading = ref(false)
   const uploadProgress = ref(0)
   const uploadStatus = ref<UploadStatus | null>(null)
+  const selectedLabel = ref({
+    label: '助眠音乐',
+    value: 0
+  })  // Default label
   
   // Constants
   const UPLOAD_URL = 'http://localhost:8642/api/upload'
@@ -168,10 +202,11 @@ import axios from 'axios'
     try {
       const totalFiles = selectedFiles.value.length
       let completedFiles = 0
-  
       for (const file of selectedFiles.value) {
         const formData = new FormData()
         formData.append('file', file)
+        formData.append('class', selectedLabel.value["value"].toString())
+
   
         // A "network error" in axios usually means the request could not reach the server at all,
         // often due to CORS issues, server not running, wrong URL, or network connectivity problems.
@@ -244,6 +279,7 @@ import axios from 'axios'
   
   .upload-card {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.95);
   }
   
   .upload-area {
@@ -253,7 +289,7 @@ import axios from 'axios'
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    background-color: #fafafa;
+    background-color: var(--color-background-soft);
   }
   
   .upload-area:hover {

@@ -28,7 +28,7 @@ import { RouterLink, RouterView } from 'vue-router'
   height: 100vh;
   width: 100%;
   overflow-y: auto;
-  background: linear-gradient(135deg, #66ead8 0%, #04ff3f 100%);
+  /* background: linear-gradient(135deg, #66ead8 0%, #04ff3f 100%); */
 }
 
 .content {
