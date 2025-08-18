@@ -1,7 +1,9 @@
+use serde::Deserialize;
 use serde::Serialize;
 use sqlx::Acquire as _;
 use sqlx::Row;
 
+use crate::api::utils::PaginationRequest;
 use crate::dao::db_state::DBClientState;
 
 pub struct FileDao {
@@ -74,6 +76,69 @@ impl FileDao {
         Ok(())
     }
 
+    pub async fn get_files(
+        &self,
+        request: &PaginationRequest<FileEntryFilter>,
+    ) -> Result<(Vec<FileEntry>, i64), sqlx::Error> {
+        let pool = self.db_client_state.get_pool();
+        let mut conn = pool.acquire().await.unwrap();
+        let mut tx = conn.begin().await.unwrap();
+
+        let mut query_str = String::from("SELECT * FROM file");
+        let mut query_count_str = String::from("SELECT COUNT(*) FROM file");
+        let mut conditions = Vec::new();
+        match &request.condition {
+            Some(filter) => {
+                if let Some(name) = &filter.name {
+                    conditions.push(format!("name = '{}'", name));
+                }
+
+                if let Some(class) = &filter.class {
+                    conditions.push(format!("class = '{}'", class));
+                }
+
+                if let Some(is_training_data) = &filter.is_training_data {
+                    conditions.push(format!("is_training_data = {}", is_training_data));
+                }
+
+                if !conditions.is_empty() {
+                    query_str += " WHERE ";
+                    query_str += &conditions.join(" AND ");
+                    query_count_str += " WHERE ";
+                    query_count_str += &conditions.join(" AND ");
+                }
+            }
+            None => {}
+        };
+
+        query_count_str += " ORDER BY id DESC";
+        let count_query = sqlx::query(&query_count_str).fetch_one(&mut *tx).await?;
+        let count = count_query.get::<i64, _>(0);
+
+        query_str += &format!(
+            " ORDER BY id DESC LIMIT {} OFFSET {}",
+            request.page_size,
+            request.page * request.page_size
+        );
+
+        let paged_query = sqlx::query(&query_str);
+        let files_row = paged_query.fetch_all(&mut *tx).await?;
+        let files: Vec<FileEntry> = files_row
+            .into_iter()
+            .map(|row| FileEntry {
+                id: row.get("id"),
+                name: row.get("name"),
+                size: row.get("size"),
+                path: row.get("path"),
+                class: row.get("class"),
+                is_training_data: row.get("is_training_data"),
+                created_at: row.get("created_at"),
+            })
+            .collect();
+
+        Ok((files, count))
+    }
+
     async fn init(&self) {
         let pool = self.db_client_state.get_pool();
         let mut conn = pool.acquire().await.unwrap();
@@ -107,7 +172,7 @@ impl FileDao {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FileEntry {
     pub id: Option<i64>,
     pub name: String,
@@ -116,4 +181,11 @@ pub struct FileEntry {
     pub class: i32,
     pub is_training_data: Option<bool>,
     pub created_at: f64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FileEntryFilter {
+    pub name: Option<String>,
+    pub class: Option<i32>,
+    pub is_training_data: Option<bool>,
 }

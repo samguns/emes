@@ -11,7 +11,7 @@ mod dao;
 
 use app_state::AppState;
 
-const SERVER_ADDR: &str = "127.0.0.1:8642";
+const SERVER_ADDR: &str = "0.0.0.0:8642";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

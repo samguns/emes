@@ -68,3 +68,18 @@ where
         Some(s) => FromStr::from_str(s).map_err(de::Error::custom).map(Some),
     }
 }
+
+#[derive(Debug, Deserialize)]
+pub struct PaginationRequest<T> {
+    pub page: i32,
+    pub page_size: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub condition: Option<T>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GetEntryResponse<T> {
+    pub entries: Vec<T>,
+    pub entries_per_page: i32,
+    pub total_entries: i32,
+}

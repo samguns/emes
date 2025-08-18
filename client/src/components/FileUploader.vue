@@ -137,7 +137,8 @@
   })  // Default label
   
   // Constants
-  const UPLOAD_URL = 'http://localhost:8642/api/upload'
+  const UPLOAD_URL = "http://" + window.location.hostname + ":8642/api/upload"
+
   
   // Methods
   const triggerFileInput = () => {
