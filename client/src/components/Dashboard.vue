@@ -10,7 +10,7 @@ const router = useRouter();
 
 
 function handleClickPlayMusic() {
-  router.push('/music-player');
+  router.push('/play-music');
 }
 
 // 处理Action 2点击事件，跳转到上传页面
@@ -18,6 +18,10 @@ function handleClickUpload() {
   router.push('/upload');
 }
 
+// 处理Action 3点击事件，跳转到分类页面
+function handleClickClassification() {
+  router.push('/classification');
+}
 
 // State
 //const activeTab = ref<'chat' | 'tools' | 'resources'>('chat');
@@ -41,7 +45,7 @@ function handleClickUpload() {
         <div class="action-buttons">
           <button class="action-button" @click="handleClickPlayMusic">播放音乐</button>
           <button class="action-button" @click="handleClickUpload">上传音乐</button>
-          <button class="action-button">Action 3</button>
+          <button class="action-button" @click="handleClickClassification">AI分类</button>
         </div>
       </div>
     </div>

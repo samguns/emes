@@ -1,3 +1,4 @@
+pub mod filelist;
 pub mod playlist;
 pub mod py_tasks;
 pub mod routes;

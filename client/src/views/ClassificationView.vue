@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import playMusic from '../components/playMusic.vue';
+import Classification from '../components/Classification.vue';
 </script>
 
 <template>
     <div class="view-container">
-        <playMusic />
+        <Classification />
     </div>
 </template>
 

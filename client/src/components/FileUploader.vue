@@ -148,7 +148,9 @@
   const handleFileSelect = (event: Event) => {
     const target = event.target as HTMLInputElement
     if (target.files) {
-      const newFiles = Array.from(target.files)
+      const newFiles = Array.from(target.files).filter(file =>
+        file.name.endsWith('.mp3') || file.name.endsWith('.ogg')
+      )
       selectedFiles.value = [...selectedFiles.value, ...newFiles]
       clearStatus()
     }
@@ -157,7 +159,9 @@
   const handleDrop = (event: DragEvent) => {
     event.preventDefault()
     if (event.dataTransfer?.files) {
-      const droppedFiles = Array.from(event.dataTransfer.files)
+      const droppedFiles = Array.from(event.dataTransfer.files).filter(file =>
+        file.name.endsWith('.mp3') || file.name.endsWith('.ogg')
+      )
       selectedFiles.value = [...selectedFiles.value, ...droppedFiles]
       clearStatus()
     }
