@@ -8,6 +8,9 @@ services:
       - ../:/app
     working_dir: /app
     network_mode: host
+    privileged: true
     tty: true
     stdin_open: true
     restart: always
+    environment:
+      - AUDIODEV=hw:2,0
