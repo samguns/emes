@@ -6,7 +6,7 @@
     v-model:pagination="pagination"
     :rows-per-page-options="[0]"
     :loading="loading"
-    :rows-per-page-label="'Rows per page:'"
+    
     :no-data-label="'No data available'"
     class="classification-table"
     aria-label="Classification data table"
@@ -15,8 +15,7 @@
     @selection="onSelectionChange"
     
     virtual-scroll
-    :virtual-scroll-item-size="48"
-    :virtual-scroll-sticky-size-start="48"
+    :virtual-scroll-sticky-size-start="18"
     @virtual-scroll="onScroll"
   >
     <template v-slot:top>
@@ -182,7 +181,7 @@ const columns = ref<TableColumn[]>([
 
 const pagination = ref({
   page: 1,
-  rowsPerPage: 10,
+  rowsPerPage: 0,
   rowsNumber: 0,
   sortBy: 'created_at',
   descending: false
@@ -190,6 +189,7 @@ const pagination = ref({
 
 const filter = ref('');
 const loading = ref(false);
+const nextPage = ref(1);
 const error = ref<string | null>(null);
 
 // Computed property for filtered rows
@@ -229,7 +229,14 @@ async function fetchData(page: number, pageSize: number) {
 
     const data: ApiResponse = await response.json();
     
-    originalRows.value = data.data.entries;
+    // Append new entries to existing rows instead of replacing them
+    if (page === 1) {
+      // Reset rows if it's the first page
+      originalRows.value = data.data.entries;
+    } else {
+      // Append entries for subsequent pages
+      originalRows.value = [...originalRows.value, ...data.data.entries];
+    }
     pagination.value.rowsNumber = data.data.total_entries;
     
   } catch (err) {
@@ -242,25 +249,30 @@ async function fetchData(page: number, pageSize: number) {
 }
 
 // Handle pagination requests
-async function onRequest(props: any) {
-  const { page, rowsPerPage } = props.pagination;
+// async function onRequest(props: any) {
+//   const { page, rowsPerPage } = props.pagination;
   
-  pagination.value.page = page;
-  pagination.value.rowsPerPage = rowsPerPage;
+//   pagination.value.page = page;
+//   pagination.value.rowsPerPage = rowsPerPage;
   
-  await fetchData(page, rowsPerPage);
-}
+//   await fetchData(page, rowsPerPage);
+// }
 
-async function onScroll(event: any) {
-    console.log('Scroll event:', event);
+async function onScroll ({ to, ref }) {
+  const lastIndex = filteredRows.value.length - 1;
+  const lastPage = Math.ceil(pagination.value.rowsNumber / 20);
+  console.log('onScroll', to, lastIndex, nextPage.value, lastPage)
   // Handle virtual scroll events
-  if (event && event.target) {
-    const { scrollTop, clientHeight, scrollHeight } = event.target;
-    if (scrollTop + clientHeight >= scrollHeight) {
-      // User has scrolled to the bottom, load more data
-      pagination.value.page++;
-      await fetchData(pagination.value.page, pagination.value.rowsPerPage);
-    }
+  if (loading.value !== true && nextPage.value < 85 && to === lastIndex) {
+    console.log('Loading more data for virtual scroll:', { nextPage: nextPage.value });
+    loading.value = true;
+    
+    // User has scrolled to the bottom, load more data
+    
+    await fetchData(pagination.value.page, 20);
+    pagination.value.page++;
+    nextPage.value++;
+    // ref.refresh();
   }
 }
 
@@ -281,12 +293,12 @@ function clearFilter() {
 
 // Refresh data function
 async function refreshData() {
-  await fetchData(pagination.value.page, pagination.value.rowsPerPage);
+  await fetchData(pagination.value.page, 20);
 }
 
 // Selection change handler
-function onSelectionChange(details: { added: boolean, keys: [], rows: readonly TableRow[] }) {
-  if (details.added) {
+function onSelectionChange(details: { rows: readonly TableRow[] }) {
+  if (details?.added) {
     selectedFiles.value = details.rows.map(row => row.name);
   } else {
     selectedFiles.value = selectedFiles.value.filter(name => !details.rows.map(row => row.name).includes(name));
@@ -307,20 +319,27 @@ function removeSelectedFile(index: number) {
 }
 
 // Watch for filter changes to reset pagination
-watch(filter, () => {
-  pagination.value.page = 1;
-});
+// watch(filter, () => {
+//   pagination.value.page = 1;
+// });
 
 // OnMounted
 onMounted(async () => {
-  await fetchData(pagination.value.page, pagination.value.rowsPerPage);
+  await fetchData(pagination.value.page, 20);
 });
 </script>
 
 <style scoped>
 .classification-table {
-  margin: 8px;
-  min-height: 400px;
+  /* margin: 8px; */
+  height: 700px;
+
+  thead tr th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: white;
+  }
 }
 
 /* Responsive adjustments */

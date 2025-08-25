@@ -279,6 +279,7 @@
   <style scoped>
   .file-uploader {
     max-width: 600px;
+    max-height: 80%;
     margin: 0 auto;
   }
   
