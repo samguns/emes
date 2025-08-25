@@ -1,0 +1,13 @@
+services:
+  emes-devs:
+    build:
+      context: ../
+      dockerfile: devs/Dockerfile
+    container_name: emes-devs
+    volumes:
+      - ../:/app
+    working_dir: /app
+    network_mode: host
+    tty: true
+    stdin_open: true
+    restart: always
