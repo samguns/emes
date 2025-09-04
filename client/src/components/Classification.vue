@@ -6,7 +6,7 @@
     v-model:pagination="pagination"
     :rows-per-page-options="[0]"
     :loading="loading"
-    
+
     :no-data-label="'No data available'"
     class="classification-table"
     aria-label="Classification data table"
@@ -64,6 +64,18 @@
     <template v-slot:loading>
       <q-inner-loading showing color="primary" />
     </template>
+    
+    <!-- Custom template for name column with tooltip -->
+    <template v-slot:body-cell-name="props">
+      <q-td :props="props">
+        <span>
+          {{ props.row.name.length > 15 ? props.row.name.substring(0, 15) + '...' : props.row.name }}
+          <q-tooltip>
+            {{ getTooltip(props.row) }}
+          </q-tooltip>
+        </span>
+      </q-td>
+    </template>
   </q-table>
   
   <!-- Display selected files -->
@@ -109,6 +121,10 @@ function getClassLabel(classValue: number): string {
   return CLASS_LABELS[classValue] || `未知类型 (${classValue})`;
 }
 
+function getTooltip(row: TableRow): string {
+  return row.name;
+}
+
 // TypeScript interfaces
 interface TableRow {
   id: number;
@@ -144,15 +160,22 @@ interface PaginationRequest {
 // Reactive data
 const originalRows = ref<TableRow[]>([]);
 const columns = ref<TableColumn[]>([
-  { 
-    name: 'select',
+  // { 
+  //   name: 'select',
+  //   required: true,
+  //   label: ' ',
+  //   align: 'center',
+  //   field: 'id',
+  //   sortable: false 
+  // },
+  {
+    name: 'name',
     required: true,
-    label: ' ',
-    align: 'center',
-    field: 'id',
-    sortable: false 
+    label: '名字',
+    align: 'left',
+    field: 'name',
+    sortable: true
   },
-  { name: 'name', required: true, label: '名字', align: 'left', field: 'name', sortable: true },
   { 
     name: 'class', 
     required: true, 
@@ -174,7 +197,7 @@ const columns = ref<TableColumn[]>([
     required: true, 
     label: '上传日期', 
     align: 'left', 
-    field: row => new Date(row.created_at).toLocaleString(), 
+    field: row => new Date(row.created_at).toLocaleString(),
     sortable: true 
   },
 ]);
@@ -256,15 +279,13 @@ async function fetchData(page: number, pageSize: number) {
 //   pagination.value.rowsPerPage = rowsPerPage;
   
 //   await fetchData(page, rowsPerPage);
-// }
-
-async function onScroll ({ to, ref }) {
+async function onScroll({ to, ref }: { to: number; ref: any }) {
   const lastIndex = filteredRows.value.length - 1;
   const lastPage = Math.ceil(pagination.value.rowsNumber / 20);
-  console.log('onScroll', to, lastIndex, nextPage.value, lastPage)
+  // console.log('onScroll', to, lastIndex, nextPage.value, lastPage);
   // Handle virtual scroll events
   if (loading.value !== true && nextPage.value < 85 && to === lastIndex) {
-    console.log('Loading more data for virtual scroll:', { nextPage: nextPage.value });
+    // console.log('Loading more data for virtual scroll:', { nextPage: nextPage.value });
     loading.value = true;
     
     // User has scrolled to the bottom, load more data
@@ -297,15 +318,18 @@ async function refreshData() {
 }
 
 // Selection change handler
-function onSelectionChange(details: { rows: readonly TableRow[] }) {
+function onSelectionChange(details: {
+  added: any; rows: readonly TableRow[] 
+}) {
   if (details?.added) {
-    selectedFiles.value = details.rows.map(row => row.name);
+    selectedFiles.value.push(...details.rows.map(row => row.name));
   } else {
     selectedFiles.value = selectedFiles.value.filter(name => !details.rows.map(row => row.name).includes(name));
   }
   // Update selectedFiles with the names of selected rows
+  selected.value = originalRows.value.filter(row => selectedFiles.value.includes(row.name));
   
-  console.log('Selected files:', selectedFiles.value);
+  // console.log('Selected files:', selectedFiles.value);
 }
 
 // Remove a file from the selected files list

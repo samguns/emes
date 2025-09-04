@@ -1,19 +1,12 @@
+<script setup lang="ts">
+import MusicPlayer from '@/components/MusicPlayer.vue'
+</script>
+
 <template>
     <div class="music-player-view">
         <MusicPlayer />
     </div>
 </template>
-
-<script>
-import MusicPlayer from '@/components/MusicPlayer.vue'
-
-export default {
-    name: 'MusicPlayerView',
-    components: {
-        MusicPlayer
-    }
-}
-</script>
 
 <style scoped>
 .music-player-view {

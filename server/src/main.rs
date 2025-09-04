@@ -1,4 +1,5 @@
 use pyo3::prelude::*;
+use socketioxide::SocketIo;
 use std::sync::Arc;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -8,6 +9,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 mod api;
 mod app_state;
 mod dao;
+mod sock_io;
 
 use app_state::AppState;
 
@@ -51,10 +53,18 @@ async fn main() -> anyhow::Result<()> {
 
     let app_state = Arc::new(AppState::new().await);
 
+    let (io_layer, io) = SocketIo::builder()
+        .with_state(app_state.clone())
+        .build_layer();
+
+    sock_io::io_ai_ns(&io).await;
+
     let router = axum::Router::new()
         .nest("/api", api::routes::routes(app_state.clone()))
         // .nest_service("/mcp", service)
-        .layer(cors);
+        .layer(cors)
+        .layer(io_layer);
+
     let tcp_listener = tokio::net::TcpListener::bind(SERVER_ADDR).await?;
     tracing::info!("Server is running on {}", SERVER_ADDR);
     let _ = axum::serve(tcp_listener, router)

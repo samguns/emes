@@ -1,5 +1,6 @@
 services:
   emes-devs:
+    image: emes-devs:latest
     build:
       context: ../
       dockerfile: devs/Dockerfile
