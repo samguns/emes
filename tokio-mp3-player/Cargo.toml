@@ -1,0 +1,48 @@
+[package]
+name = "tokio-mp3-player"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+clap = { version = "4.5", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+nix = { version = "0.29", features = ["signal"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+panic = "unwind"
+
+[package]
+name = "tokio-mp3-player"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+thiserror = "1"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+bytes = "1"
+ futures = "0.3"
+ tracing = "0.1"
+ tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+ nix = { version = "0.29", features = ["signal"] }
+ 
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+panic = "unwind"
