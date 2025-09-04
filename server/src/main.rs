@@ -1,6 +1,9 @@
 use pyo3::prelude::*;
 use socketioxide::SocketIo;
 use std::sync::Arc;
+use tokio::signal;
+use tokio_util::sync::CancellationToken;
+use tokio_util::task::TaskTracker;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -9,6 +12,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 mod api;
 mod app_state;
 mod dao;
+mod player;
 mod sock_io;
 
 use app_state::AppState;
@@ -52,6 +56,9 @@ async fn main() -> anyhow::Result<()> {
         .expose_headers(Any);
 
     let app_state = Arc::new(AppState::new().await);
+    let tracker = TaskTracker::new();
+    let shutdown_token = CancellationToken::new();
+    background_tasks(app_state.clone(), tracker.clone(), shutdown_token.clone()).await;
 
     let (io_layer, io) = SocketIo::builder()
         .with_state(app_state.clone())
@@ -68,8 +75,39 @@ async fn main() -> anyhow::Result<()> {
     let tcp_listener = tokio::net::TcpListener::bind(SERVER_ADDR).await?;
     tracing::info!("Server is running on {}", SERVER_ADDR);
     let _ = axum::serve(tcp_listener, router)
-        .with_graceful_shutdown(async { tokio::signal::ctrl_c().await.unwrap() })
+        .with_graceful_shutdown(graceful_shutdown(tracker, shutdown_token))
         .await;
 
     Ok(())
+}
+
+async fn background_tasks(
+    app_state: Arc<AppState>,
+    tracker: TaskTracker,
+    shutdown_token: CancellationToken,
+) {
+    let player = app_state.player_state.get_music_player();
+    tracker.spawn(async move {
+        player.run(shutdown_token).await;
+    });
+}
+
+async fn graceful_shutdown(tracker: TaskTracker, shutdown_token: CancellationToken) {
+    let ctrl_c = async {
+        if signal::ctrl_c().await.is_err() {
+            tracing::error!("Failed to install Ctrl+C handler");
+        }
+    };
+
+    tokio::select! {
+        _ = ctrl_c => {
+            tracing::warn!("Shutting down...");
+            shutdown_token.cancel();
+        }
+    }
+
+    tracker.close();
+    tracker.wait().await;
+
+    tracing::info!("Shutdown complete");
 }

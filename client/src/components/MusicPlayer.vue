@@ -184,10 +184,20 @@ function formatTime(s: number) {
 async function refresh() {
   loading.value = true;
   try {
+    // Get playlist for the current class
+    // const endpoint = props.class ? `/api/playlist?class=${encodeURIComponent(props.class)}` : '/api/playlist';
+    const { data } = await api.post('/api/playlist', {
+      page: 0,
+      page_size: 1000,
+      condition: {
+        class: Number(props.class)
+      }
+    });
+    status.playlist = data;
     // Use the class parameter if provided
-    const endpoint = props.class ? `/api/player/status?class=${encodeURIComponent(props.class)}` : '/status';
-    const { data } = await api.get(endpoint);
-    Object.assign(status, data);
+    // const endpoint = props.class ? `/api/player/status?class=${encodeURIComponent(props.class)}` : '/status';
+    // const { data } = await api.get(endpoint);
+    // Object.assign(status, data);
     // sync sliders
     scrubSeconds.value = Number(status.position_sec || 0);
     volumePercent.value = Math.round(Number(status.volume || 1) * 100);

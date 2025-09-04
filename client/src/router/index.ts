@@ -37,6 +37,7 @@ const router = createRouter({
       path: '/player/:class',
       name: 'player',
       component: MusicPlayerView,
+      props: true,
     },
     {
       path: '/classification',

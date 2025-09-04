@@ -14,7 +14,8 @@ onMounted(() => {
   // });
 
   if (sockNsAiService.isConnected()) {
-    sockNsAiService.sendMessage('message', 'Hello, server from the other side!');
+    // sockNsAiService.sendMessage('message', 'Hello, server from the other side!');
+    sockNsAiService.sendMessage('training:ack', 'what');
     return;
   }
 

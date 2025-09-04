@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import MusicPlayer from '@/components/MusicPlayer.vue'
+
+// Define props to receive route parameters
+const props = defineProps({
+  class: { type: String, default: '' }
+});
 </script>
 
 <template>
     <div class="music-player-view">
-        <MusicPlayer />
+        <MusicPlayer :class="props.class" />
     </div>
 </template>
 

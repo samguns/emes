@@ -17,8 +17,10 @@ sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
 pyo3 = { version = "0.25.1", features = ["auto-initialize"] }
 futures = "0.3.31"
 chrono = "0.4.41"
-tokio-util = { version = "0.7.16", features = ["io"] }
+tokio-util = { version = "0.7.16", features = ["io", "rt"] }
 socketioxide = { version = "0.16.3", features = ["extensions", "state"] }
+symphonia = { version = "0.5.4", features = ["all", "opt-simd"] }
+rodio = "0.21.1"
 
 [build-dependencies]
 cmake = "0.1.54"

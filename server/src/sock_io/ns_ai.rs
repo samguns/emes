@@ -1,7 +1,7 @@
-use socketioxide::extract::{Data, SocketRef, State};
+use std::sync::Arc;
 
 use crate::app_state::AppState;
 
-pub async fn on_training_ack(s: SocketRef, Data(msg): Data<String>, _app_state: State<AppState>) {
-    tracing::info!("ai message: {}", msg);
+pub async fn on_training_ack(msg: String, app_state: Arc<AppState>) {
+    tracing::info!("on_training_ack: {}", msg);
 }
