@@ -133,7 +133,7 @@ function handleClickClassification() {
 }
 
 .action-button {
-  background-color: var(--color-primary);
+  /* background-color: var(--color-primary); */
   /* color: white; */
   border: none;
   border-radius: 4px;

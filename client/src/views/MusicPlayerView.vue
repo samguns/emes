@@ -15,8 +15,10 @@ const props = defineProps({
 
 <style scoped>
 .music-player-view {
-    padding: 20px;
-    max-width: 800px;
+    padding: 0;
+    max-width: 900px;
+    height: 90vh;
     margin: 0 auto;
+    overflow-y: auto;
 }
 </style>

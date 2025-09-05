@@ -4,14 +4,13 @@ use std::{
     fs::File,
     io::BufReader,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, RwLock},
     time::Duration,
 };
-use tokio::sync::RwLock;
 
 pub struct Player {
-    sink: Option<Sink>,
-    _stream: Option<OutputStream>,
+    sink: Option<Arc<RwLock<Sink>>>,
+    stream: Option<OutputStream>,
     current_track: Option<PathBuf>,
     volume: f32,
     position: Arc<RwLock<Duration>>,
@@ -22,7 +21,7 @@ impl Player {
     pub fn new() -> Self {
         Self {
             sink: None,
-            _stream: None,
+            stream: None,
             // stream_handle: None,
             current_track: None,
             volume: 0.5,
@@ -36,10 +35,9 @@ impl Player {
         self.stop().await?;
 
         // Create output stream if not exists
-        if self._stream.is_none() {
+        if self.stream.is_none() {
             let stream = OutputStreamBuilder::open_default_stream()?;
-            self._stream = Some(stream);
-            // self.stream_handle = Some(stream_handle);
+            self.stream = Some(stream);
         }
 
         // Load and decode the audio file
@@ -55,47 +53,51 @@ impl Player {
         self.duration = source.total_duration();
 
         // Create new sink and append the source
-        if let Some(ref stream_handle) = self._stream {
+        if let Some(ref stream_handle) = self.stream {
             let sink = Sink::connect_new(stream_handle.mixer());
 
             sink.set_volume(self.volume);
             sink.append(source);
             sink.pause(); // Start paused
 
-            self.sink = Some(sink);
+            self.sink = Some(Arc::new(RwLock::new(sink)));
             self.current_track = Some(path);
-            *self.position.write().await = Duration::from_secs(0);
+            *self.position.write().unwrap() = Duration::from_secs(0);
         }
 
         Ok(())
     }
 
     pub async fn play(&mut self) -> Result<()> {
-        if let Some(ref sink) = self.sink {
+        if let Some(ref sink) = self.sink.as_ref() {
+            let sink = sink.write().unwrap();
             sink.play();
         }
         Ok(())
     }
 
     pub async fn pause(&mut self) -> Result<()> {
-        if let Some(ref sink) = self.sink {
+        if let Some(ref sink) = self.sink.as_ref() {
+            let sink = sink.write().unwrap();
             sink.pause();
         }
         Ok(())
     }
 
     pub async fn stop(&mut self) -> Result<()> {
-        if let Some(sink) = self.sink.take() {
+        if let Some(sink) = self.sink.as_ref() {
+            let sink = sink.write().unwrap();
             sink.stop();
         }
         self.current_track = None;
-        *self.position.write().await = Duration::from_secs(0);
+        *self.position.write().unwrap() = Duration::from_secs(0);
         self.duration = None;
         Ok(())
     }
 
     pub fn is_playing(&self) -> bool {
-        if let Some(ref sink) = self.sink {
+        if let Some(ref sink) = self.sink.as_ref() {
+            let sink = sink.read().unwrap();
             !sink.is_paused() && !sink.empty()
         } else {
             false
@@ -105,7 +107,7 @@ impl Player {
     pub fn get_position(&self) -> Duration {
         // Note: elapsed() method doesn't exist in rodio 0.19
         // We would need to track position manually or use a different approach
-        // Duration::from_secs(0)
+        Duration::from_secs(0)
     }
 
     pub fn get_duration(&self) -> Option<Duration> {
@@ -113,12 +115,13 @@ impl Player {
     }
 
     pub async fn seek(&mut self, position: Duration) -> Result<()> {
-        if let Some(ref sink) = self.sink {
+        if let Some(ref sink) = self.sink.as_ref() {
+            let sink = sink.write().unwrap();
             // Note: try_seek returns a Result with SeekError which doesn't implement std::error::Error
             // We'll handle it differently
             match sink.try_seek(position) {
                 Ok(()) => {
-                    *self.position.write().await = position;
+                    *self.position.write().unwrap() = position;
                 }
                 Err(_) => {
                     return Err(anyhow::anyhow!("Failed to seek to position"));
@@ -130,7 +133,8 @@ impl Player {
 
     pub async fn set_volume(&mut self, volume: f32) -> Result<()> {
         self.volume = volume.clamp(0.0, 1.0);
-        if let Some(ref sink) = self.sink {
+        if let Some(ref sink) = self.sink.as_ref() {
+            let sink = sink.write().unwrap();
             sink.set_volume(self.volume);
         }
         Ok(())
@@ -145,7 +149,8 @@ impl Player {
     }
 
     pub fn has_ended(&self) -> bool {
-        if let Some(ref sink) = self.sink {
+        if let Some(ref sink) = self.sink.as_ref() {
+            let sink = sink.read().unwrap();
             sink.empty()
         } else {
             false

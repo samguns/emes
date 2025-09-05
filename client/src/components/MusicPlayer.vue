@@ -59,7 +59,7 @@
                 <q-btn :color="status.paused ? 'primary' : 'primary'" :icon="status.paused ? 'play_arrow' : 'pause'" round @click="toggle" />
                 <q-btn color="grey-8" icon="skip_next" round @click="next" />
                 <q-separator vertical class="q-mx-md" />
-                <q-btn color="grey-8" dense outline label="-5s" @click="seek(-5)" />
+                <!-- <q-btn color="grey-8" dense outline label="-5s" @click="seek(-5)" /> -->
                 <q-btn color="grey-8" dense outline label="+5s" @click="seek(5)" />
                 <q-separator vertical class="q-mx-md" />
                 <div class="row items-center">
@@ -67,7 +67,7 @@
                   <q-slider
                     v-model="volumePercent"
                     :min="0"
-                    :max="400"
+                    :max="100"
                     :step="1"
                     style="min-width: 220px"
                     @change="setVolumePercent"
@@ -77,7 +77,7 @@
               </div>
             </q-card>
 
-            <q-card flat bordered class="q-pa-md q-mt-lg">
+            <!-- <q-card flat bordered class="q-pa-md q-mt-lg">
               <div class="row items-center q-gutter-sm">
                 <q-input v-model="playIndexInput" type="number" label="Play index" filled dense style="width: 160px" />
                 <q-btn label="Play" color="primary" @click="playIndex" />
@@ -86,7 +86,7 @@
               <div class="text-caption text-grey q-mt-sm">
                 Tip: indices are 0-based. Adding files requires server-side paths via <code>/load</code> or <code>/enqueue</code>.
               </div>
-            </q-card>
+            </q-card> -->
           </div>
 
           <div class="col-12 col-md-4">
@@ -103,7 +103,7 @@
                 >
                   <q-item-section>
                     <div class="ellipsis">{{ basename(p) }}</div>
-                    <div class="text-caption text-grey-7 ellipsis">{{ p }}</div>
+                    <!-- <div class="text-caption text-grey-7 ellipsis">{{ p }}</div> -->
                   </q-item-section>
                   <q-item-section side>
                     <q-badge v-if="status.index === i" color="primary" label="Now" />
@@ -115,12 +115,12 @@
               </q-list>
             </q-card>
 
-            <q-card flat bordered class="q-pa-md q-mt-lg">
+            <!-- <q-card flat bordered class="q-pa-md q-mt-lg">
               <div class="text-subtitle1 q-mb-sm">Raw status</div>
               <q-scroll-area style="height: 240px">
                 <pre class="text-caption">{{ status }}</pre>
               </q-scroll-area>
-            </q-card>
+            </q-card> -->
           </div>
         </div>
       </q-page>
@@ -142,6 +142,7 @@ type PlayerOpt = { label: string; value: number | null };
 const status = reactive<any>({
   playlist: [],
   index: null,
+  current_track: null,
   track: null,
   position_sec: 0,
   position: '--:--',
@@ -149,8 +150,7 @@ const status = reactive<any>({
   duration: '--:--',
   paused: false,
   eof: false,
-  volume: 1.0,
-  player: null
+  volume: 1.0
 });
 
 const loading = ref(false);
@@ -161,14 +161,25 @@ const playIndexInput = ref<number>(0);
 
 const durationSec = computed(() => Number(status.duration_sec || 0));
 const progress = computed(() => (durationSec.value > 0 ? (Number(status.position_sec || 0) / durationSec.value) : 0));
-const currentTitle = computed(() => (status.track ? basename(status.track) : null));
+const currentTitle = computed(() => (status.current_track ? trackName(status.current_track) : null));
 
 const volumePercent = ref(100);
-const playerOptions = ref<PlayerOpt[]>([{ label: 'Default player', value: null }]);
 const selectedPlayer = ref<number | null>(null);
 
-function basename(p: string) {
-  return (p || '').split(/[\\/]/).pop() || p;
+function basename(p: any) {
+  // console.log(p);
+  // return (p || '').split(/[\\/]/).pop() || p;
+  if (p["name"].length > 40) {
+    return p["name"].substring(0, 30) + '...';
+  }
+  return p["name"];
+}
+
+function trackName(name: string) {
+  if (name.length > 40) {
+    return name.substring(0, 30) + '...';
+  }
+  return name;
 }
 
 function formatTime(s: number) {
@@ -184,20 +195,8 @@ function formatTime(s: number) {
 async function refresh() {
   loading.value = true;
   try {
-    // Get playlist for the current class
-    // const endpoint = props.class ? `/api/playlist?class=${encodeURIComponent(props.class)}` : '/api/playlist';
-    const { data } = await api.post('/api/playlist', {
-      page: 0,
-      page_size: 1000,
-      condition: {
-        class: Number(props.class)
-      }
-    });
-    status.playlist = data;
-    // Use the class parameter if provided
-    // const endpoint = props.class ? `/api/player/status?class=${encodeURIComponent(props.class)}` : '/status';
-    // const { data } = await api.get(endpoint);
-    // Object.assign(status, data);
+    const { data } = await api.get('/api/player/status');
+    Object.assign(status, data['data']);
     // sync sliders
     scrubSeconds.value = Number(status.position_sec || 0);
     volumePercent.value = Math.round(Number(status.volume || 1) * 100);
@@ -207,32 +206,53 @@ async function refresh() {
   }
 }
 
+async function get_playlist() {
+  const { data } = await api.post('/api/playlist', {
+      page: 0,
+      page_size: 1000,
+      condition: {
+        class: Number(props.class)
+      }
+    });
+
+    if (!data["data"]["entries"]) {
+      return;
+    }
+
+    status.playlist = data["data"]["entries"];
+}
+
 async function toggle() { 
-  await api.post('/toggle', props.class ? { class: props.class } : {}); 
+  await api.post('/api/player/toggle', props.class ? { class: props.class } : {}); 
   await refresh(); 
 }
 
 async function next() { 
-  await api.post('/next', props.class ? { class: props.class } : {}); 
+  await api.post('/api/player/next', props.class ? { class: props.class } : {}); 
   await refresh(); 
 }
 
 async function prev() { 
-  await api.post('/prev', props.class ? { class: props.class } : {}); 
+  await api.post('/api/player/prev', props.class ? { class: props.class } : {}); 
   await refresh(); 
 }
 
 async function stop() { 
-  await api.post('/stop', props.class ? { class: props.class } : {}); 
+  await api.post('/api/player/stop', props.class ? { class: props.class } : {}); 
   await refresh(); 
 }
 
 async function play(index?: number) {
-  const payload: { index?: number; class?: string } = index != null ? { index } : {};
-  if (props.class) {
-    payload.class = props.class;
+  const payload: { selected_index?: number, playlist?: any } =
+      index != null ? { selected_index: index } : {selected_index: 0};
+
+  payload.playlist = status.playlist;
+
+  try {
+    await api.post('/api/player/play', payload);
+  } catch (error) {
+    console.error(error);
   }
-  await api.post('/play', payload);
   await refresh();
 }
 
@@ -246,7 +266,7 @@ async function seek(delta: number) {
   if (props.class) {
     payload.class = props.class;
   }
-  await api.post('/seek', payload);
+  await api.post('/api/player/seek', payload);
   await refresh();
 }
 
@@ -256,17 +276,15 @@ async function onSeekTo(v: number | undefined = undefined) {
   if (props.class) {
     payload.class = props.class;
   }
-  await api.post('/seek_to', payload);
+  await api.post('/api/player/seek_to', payload);
   await refresh();
 }
 
 async function setVolumePercent() {
-  const value = Math.max(0, Math.min(400, volumePercent.value)) / 100.0; // -> 0..4
-  const payload: { value: number; class?: string } = { value };
-  if (props.class) {
-    payload.class = props.class;
-  }
-  await api.post('/volume', payload);
+  const value = Math.max(0, Math.min(100, volumePercent.value)) / 100.0; // -> 0..4
+  const payload: { volume: number } = { volume: value };
+
+  await api.post('/api/player/volume', payload);
   await refresh();
 }
 
@@ -292,8 +310,9 @@ async function setPlayer() {
 }
 
 onMounted(async () => {
-  await refresh();
-  await listPlayer();
+  await get_playlist();
+  // await refresh();
+  // await listPlayer();
   pollTimer.value = window.setInterval(refresh, 1000);
 });
 
