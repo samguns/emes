@@ -67,6 +67,8 @@ function goToSleep() {
   max-width: 600px;
   width: 90%;
   margin: 2rem auto;
+  height: 90vh;
+  overflow-y: auto;
 }
 
 h1 {

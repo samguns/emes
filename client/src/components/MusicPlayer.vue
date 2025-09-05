@@ -316,7 +316,8 @@ onMounted(async () => {
   pollTimer.value = window.setInterval(refresh, 1000);
 });
 
-onBeforeUnmount(() => {
+onBeforeUnmount(async () => {
+  await stop();
   if (pollTimer.value) window.clearInterval(pollTimer.value);
 });
 </script>

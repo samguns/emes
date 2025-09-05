@@ -102,7 +102,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 
 // Constants
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${window.location.hostname}:8642`;
+const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://' + window.location.hostname + ':8642';
 const FILE_LIST_URL = `${API_BASE_URL}/api/filelist`;
 
 const selectedFiles = ref<string[]>([]);

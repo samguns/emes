@@ -11,9 +11,10 @@ import playMusic from '../components/playMusic.vue';
 <style>
 @media (min-width: 1024px) {
   .view-container {
-    min-height: 100vh;
+    height: 90vh;
     display: flex;
     align-items: center;
+    overflow-y: auto;
   }
 }
 </style>
