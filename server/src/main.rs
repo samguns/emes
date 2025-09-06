@@ -14,8 +14,11 @@ mod app_state;
 mod dao;
 mod player;
 mod sock_io;
+mod ws2812;
 
 use app_state::AppState;
+
+use crate::ws2812::Ws2812StripTask;
 
 const SERVER_ADDR: &str = "0.0.0.0:8642";
 
@@ -86,9 +89,16 @@ async fn background_tasks(
     tracker: TaskTracker,
     shutdown_token: CancellationToken,
 ) {
+    let led_strip_task_shutdown_token = shutdown_token.clone();
+
     let player = app_state.player_state.get_music_player();
     tracker.spawn(async move {
         player.run(shutdown_token).await;
+    });
+
+    let led_strip_task = Ws2812StripTask::new(app_state.clone());
+    tracker.spawn(async move {
+        led_strip_task.run(led_strip_task_shutdown_token).await;
     });
 }
 

@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Configure for SPI bus 1, CS 0, with 30 LEDs
     // Adjust these values for your hardware setup
-    let config = SpiConfig::new(1, 0, 30);
+    let config = SpiConfig::new(0, 1, 11);
     let mut strip = Ws2812::new(config)?;
     
     println!("Initialized strip with {} LEDs", strip.len());

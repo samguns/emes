@@ -3,6 +3,7 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
+use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
 
@@ -29,6 +30,19 @@ pub async fn get_file_list(
         },
         "Success",
     ))
+}
+
+pub async fn update_class(
+    state: State<Arc<AppState>>,
+    Json(req): Json<file_dao::UpdateClassRequest>,
+) -> Result<SuccessResponse<()>, GetFileListError> {
+    let file_dao = file_dao::FileDao::new(&state.db_state).await;
+    let update_result = file_dao.update_class(&req).await;
+    if update_result.is_err() {
+        return Err(GetFileListError::DatabaseError);
+    }
+
+    Ok(SuccessResponse::new((), "Success"))
 }
 
 pub enum GetFileListError {

@@ -76,6 +76,24 @@
         </span>
       </q-td>
     </template>
+    
+    <!-- Custom template for class column with select dropdown -->
+    <template v-slot:body-cell-class="props">
+      <q-td :props="props">
+        <q-select
+          :model-value="CLASS_LABELS[props.row.class]"
+          :options="classOptions"
+          option-value="value"
+          option-label="label"
+          dense
+          borderless
+          :loading="updating.has(props.row.id)"
+          :disable="updating.has(props.row.id)"
+          @update:model-value="(newValue) => onClassChange(props.row, newValue)"
+          style="min-width: 120px"
+        />
+      </q-td>
+    </template>
   </q-table>
   
   <!-- Display selected files -->
@@ -93,13 +111,22 @@
     </q-chip> -->
     
     <div class="q-mt-md">
-      <q-btn color="primary" label="训练分类模型" icon="play_arrow" />
+      <q-btn 
+        color="primary" 
+        :label="`训练分类模型 ${selectedFiles.length > 0 ? `(已选择 ${selectedFiles.length} 个文件)` : ''}`"
+        icon="play_arrow"
+        :disable="selectedFiles.length === 0"
+      />
+      <div v-if="selectedFiles.length === 0" class="text-caption text-grey q-mt-sm">
+        请先选择要用于训练的文件
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
+import { useQuasar } from 'quasar';
 
 // Constants
 const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://' + window.location.hostname + ':8642';
@@ -116,6 +143,12 @@ const CLASS_LABELS: Record<number, string> = {
   3: '其他'
 };
 
+// Create options array for class select dropdown
+const classOptions = Object.entries(CLASS_LABELS).map(([value, label]) => ({
+  label,
+  value: parseInt(value)
+}));
+
 // Function to get the class label from the class value
 function getClassLabel(classValue: number): string {
   return CLASS_LABELS[classValue] || `未知类型 (${classValue})`;
@@ -123,6 +156,86 @@ function getClassLabel(classValue: number): string {
 
 function getTooltip(row: TableRow): string {
   return row.name;
+}
+
+const $q = useQuasar();
+const updating = ref<Set<number>>(new Set());
+
+// Handle class change for a row
+async function onClassChange(row: TableRow, newClassValue: any) {
+  const oldValue = row.class;
+  
+  // Prevent multiple simultaneous updates for the same row
+  if (updating.value.has(row.id)) {
+    row.class = oldValue;
+    return;
+  }
+  
+  updating.value.add(row.id);
+  
+  try {
+    // Show loading notification
+    const loadingNotify = $q.notify({
+      type: 'ongoing',
+      message: `正在更新 "${row.name.length > 20 ? row.name.substring(0, 20) + '...' : row.name}" 的类别...`,
+      spinner: true,
+      timeout: 0
+    });
+    
+    // Update the class in the backend
+    const response = await fetch(`${API_BASE_URL}/api/filelist/update-class`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: row.id,
+        class: newClassValue.value,
+      }),
+    });
+
+    // Dismiss loading notification
+    loadingNotify();
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('update_class result: ', result);
+    
+    if (result.code === 0) {
+      // Update successful - show success notification
+      $q.notify({
+        type: 'positive',
+        message: `成功更新类别：${getClassLabel(oldValue)} → ${getClassLabel(newClassValue.value)}`,
+        icon: 'check_circle',
+        timeout: 2000
+      });
+
+      row.class = newClassValue.value;
+      
+      // console.log(`Successfully updated class for "${row.name}" from ${getClassLabel(oldValue)} to ${getClassLabel(newClassValue)}`);
+    } else {
+      throw new Error(result.message || 'Failed to update class');
+    }
+    
+  } catch (error) {
+    console.error('Error updating class:', error);
+    
+    // Revert the change on error
+    row.class = oldValue;
+    
+    // Show error notification
+    $q.notify({
+      type: 'negative',
+      message: `更新失败：${error instanceof Error ? error.message : '未知错误'}`,
+      icon: 'error',
+      timeout: 5000
+    });
+  } finally {
+    updating.value.delete(row.id);
+  }
 }
 
 // TypeScript interfaces
@@ -181,7 +294,7 @@ const columns = ref<TableColumn[]>([
     required: true, 
     label: '类别', 
     align: 'left', 
-    field: row => getClassLabel(row.class), 
+    field: 'class',
     sortable: true 
   },
   { 

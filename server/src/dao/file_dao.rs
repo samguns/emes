@@ -170,6 +170,28 @@ impl FileDao {
 
         tx.commit().await.expect("Failed to commit transaction");
     }
+
+    pub async fn update_class(&self, req: &UpdateClassRequest) -> Result<(), sqlx::Error> {
+        let pool = self.db_client_state.get_pool();
+        let mut conn = pool.acquire().await.unwrap();
+        let mut tx = conn.begin().await.unwrap();
+
+        let update_query = sqlx::query("UPDATE file SET class = ? WHERE id = ?")
+            .bind(req.class)
+            .bind(req.id);
+        let update_query = update_query.execute(&mut *tx).await;
+        if let Err(e) = update_query {
+            tracing::error!("Failed to update class: {}", e);
+            return Err(e);
+        }
+
+        if let Err(e) = tx.commit().await {
+            tracing::error!("Failed to commit transaction: {}", e);
+            return Err(e);
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -188,4 +210,10 @@ pub struct FileEntryFilter {
     pub name: Option<String>,
     pub class: Option<i32>,
     pub is_training_data: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateClassRequest {
+    pub id: i64,
+    pub class: i32,
 }

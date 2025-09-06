@@ -284,7 +284,12 @@ async function setVolumePercent() {
   const value = Math.max(0, Math.min(100, volumePercent.value)) / 100.0; // -> 0..4
   const payload: { volume: number } = { volume: value };
 
-  await api.post('/api/player/volume', payload);
+  try {
+    await api.post('/api/player/volume', payload);
+    status.volume = value * 100.0;
+  } catch (error) {
+    console.error(error);
+  }
   await refresh();
 }
 

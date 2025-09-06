@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use cpal::traits::{DeviceTrait, HostTrait};
 use rodio::{Decoder, OutputStream, OutputStreamBuilder, Sink, Source};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -9,6 +10,8 @@ use std::{
     time::Duration,
 };
 use tokio_util::sync::CancellationToken;
+
+const CHECK_SINK_EMPTY_INTERVAL: Duration = Duration::from_secs(1);
 
 struct Inner {
     sink: Option<Sink>,
@@ -48,12 +51,39 @@ impl MusicPlayer {
     }
 
     pub async fn run(&self, shutdown_token: CancellationToken) {
+        let mut check_sink_interval = tokio::time::interval(CHECK_SINK_EMPTY_INTERVAL);
+        check_sink_interval.tick().await;
+
         while !shutdown_token.is_cancelled() {
             tokio::select! {
                 () = shutdown_token.cancelled() => {
                     tracing::info!("Shutting down music player");
                 },
+                _ = check_sink_interval.tick() => {
+                    self.play_next();
+                },
             }
+        }
+    }
+
+    fn play_next(&self) {
+        let mut should_play_next = false;
+
+        {
+            let inner = self.inner.lock().unwrap();
+            let playlist = match inner.playlist {
+                Some(ref playlist) => playlist,
+                None => return,
+            };
+            if let Some(ref sink) = inner.sink {
+                if sink.empty() && !sink.is_paused() && playlist.tracks.len() > 0 {
+                    should_play_next = true;
+                }
+            }
+        }
+
+        if should_play_next {
+            let _ = self.next();
         }
     }
 
@@ -62,7 +92,16 @@ impl MusicPlayer {
 
         let mut inner = self.inner.lock().unwrap();
         if inner.stream.is_none() {
-            let stream = OutputStreamBuilder::open_default_stream()?;
+            let host = cpal::default_host();
+            let mut devices = host.output_devices().expect("No output devices found");
+            // Find the output device with the name contains "es3288"
+            let device = devices
+                .find(|d| d.name().unwrap().contains("es8388"))
+                .unwrap();
+            let stream = OutputStreamBuilder::from_device(device)
+                .unwrap()
+                .open_stream()?;
+            // let stream = OutputStreamBuilder::open_default_stream()?;
             inner.stream = Some(stream);
         }
 
