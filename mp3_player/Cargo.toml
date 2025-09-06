@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 tokio = { version = "1.41", features = ["full"] }
 rodio = "0.21.1"
-cpal = "0.15"
 crossterm = "0.28"
 ratatui = "0.29"
 symphonia = { version = "0.5", features = ["mp3", "aac", "flac", "ogg", "wav"] }
