@@ -27,6 +27,8 @@ import { RouterLink, RouterView } from 'vue-router'
   flex-direction: column;
   height: 100vh;
   width: 100%;
+  overflow-y: auto;
+  /* background: linear-gradient(135deg, #66ead8 0%, #04ff3f 100%); */
 }
 
 .content {
@@ -39,12 +41,13 @@ import { RouterLink, RouterView } from 'vue-router'
   display: flex;
   justify-content: space-around;
   background-color: var(--color-background-soft);
-  border-top: 1px solid var(--color-border);
-  padding: 0.5rem 0;
+  /* border-top: 1px solid var(--color-border); */
+  /* padding: 0.5rem 0; */
   position: fixed;
   bottom: 0;
   width: 100%;
   z-index: 10;
+  height: 70px;
 }
 
 .nav-item {

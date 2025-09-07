@@ -21,6 +21,36 @@
             </div>
           </div>
   
+          <!-- Label Selection -->
+          <div class="q-mt-md">
+            <div class="text-subtitle2 q-mb-sm">类型</div>
+
+            <q-select class="q-mb-sm"
+              v-model="selectedLabel"
+              :options="[
+                {
+                  label: '助眠音乐',
+                  value: 0
+                },
+                {
+                  label: '活力音乐',
+                  value: 1
+                },
+                {
+                  label: '运动音乐',
+                  value: 2
+                },
+                {
+                  label: '其他',
+                  value: 3
+                }
+              ]"
+              label="选择类型"
+              dense
+              bordered
+            />
+          </div>
+
           <!-- Selected Files Display -->
           <div v-if="selectedFiles.length > 0" class="q-mt-md">
             <div class="text-subtitle2 q-mb-sm">Selected Files:</div>
@@ -83,10 +113,11 @@
     </div>
   </template>
   
-  <script setup lang="ts">
+<script setup lang="ts">
   import { ref } from 'vue'
   import { useQuasar } from 'quasar'
-  
+  import axios from 'axios'
+
   interface UploadStatus {
     type: 'success' | 'error'
     message: string
@@ -100,9 +131,14 @@
   const isUploading = ref(false)
   const uploadProgress = ref(0)
   const uploadStatus = ref<UploadStatus | null>(null)
+  const selectedLabel = ref({
+    label: '助眠音乐',
+    value: 0
+  })  // Default label
   
   // Constants
-  const UPLOAD_URL = 'http://localhost:8642/api/upload'
+  const UPLOAD_URL = "http://" + window.location.hostname + ":8642/api/upload"
+
   
   // Methods
   const triggerFileInput = () => {
@@ -112,7 +148,9 @@
   const handleFileSelect = (event: Event) => {
     const target = event.target as HTMLInputElement
     if (target.files) {
-      const newFiles = Array.from(target.files)
+      const newFiles = Array.from(target.files).filter(file =>
+        file.name.endsWith('.mp3') || file.name.endsWith('.ogg')
+      )
       selectedFiles.value = [...selectedFiles.value, ...newFiles]
       clearStatus()
     }
@@ -121,7 +159,9 @@
   const handleDrop = (event: DragEvent) => {
     event.preventDefault()
     if (event.dataTransfer?.files) {
-      const droppedFiles = Array.from(event.dataTransfer.files)
+      const droppedFiles = Array.from(event.dataTransfer.files).filter(file =>
+        file.name.endsWith('.mp3') || file.name.endsWith('.ogg')
+      )
       selectedFiles.value = [...selectedFiles.value, ...droppedFiles]
       clearStatus()
     }
@@ -167,20 +207,36 @@
     try {
       const totalFiles = selectedFiles.value.length
       let completedFiles = 0
-  
       for (const file of selectedFiles.value) {
         const formData = new FormData()
         formData.append('file', file)
+        formData.append('class', selectedLabel.value["value"].toString())
+
   
-        const response = await fetch(UPLOAD_URL, {
-          method: 'POST',
-          body: formData,
-        })
-  
-        if (!response.ok) {
+        // A "network error" in axios usually means the request could not reach the server at all,
+        // often due to CORS issues, server not running, wrong URL, or network connectivity problems.
+        // It is NOT a normal HTTP error (like 404 or 500), but a failure to make the request.
+        // To help debug, you can add a try/catch here and log the error details:
+        let response;
+        try {
+          response = await axios.post(UPLOAD_URL, formData, {
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+        } catch (err) {
+          // Axios "network error" is usually in err.message and err.request
+          console.error('Axios network error:', err);
+          throw err; // rethrow so the outer catch handles it
+        }
+
+        // Axios responses do not have an 'ok' property like fetch.
+        // Instead, check for a 2xx status code.
+        if (response.status < 200 || response.status >= 300) {
           throw new Error(`Upload failed for ${file.name}: ${response.statusText}`)
         }
-  
+
         completedFiles++
         uploadProgress.value = completedFiles / totalFiles
       }
@@ -223,11 +279,13 @@
   <style scoped>
   .file-uploader {
     max-width: 600px;
+    max-height: 80%;
     margin: 0 auto;
   }
   
   .upload-card {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.95);
   }
   
   .upload-area {
@@ -237,7 +295,7 @@
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    background-color: #fafafa;
+    background-color: var(--color-background-soft);
   }
   
   .upload-area:hover {

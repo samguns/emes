@@ -1,6 +1,6 @@
 mod player;
-mod ui;
 mod playlist;
+mod ui;
 
 use anyhow::Result;
 use clap::Parser;
@@ -10,19 +10,10 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
-use std::{
-    io,
-    path::PathBuf,
-    sync::Arc,
-    time::Duration,
-};
+use std::{io, path::PathBuf, sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 
-use crate::{
-    player::Player,
-    playlist::Playlist,
-    ui::UI,
-};
+use crate::{player::Player, playlist::Playlist, ui::UI};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -30,11 +21,11 @@ struct Args {
     /// Path to MP3 file or directory containing MP3 files
     #[arg(value_name = "PATH")]
     path: Option<PathBuf>,
-    
+
     /// Start playing immediately
     #[arg(short, long)]
     autoplay: bool,
-    
+
     /// Shuffle playlist
     #[arg(short, long)]
     shuffle: bool,
@@ -43,17 +34,17 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-    
+
     // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    
+
     // Create playlist
     let mut playlist = Playlist::new();
-    
+
     // Load files from path if provided
     if let Some(path) = args.path {
         if path.is_file() {
@@ -65,15 +56,15 @@ async fn main() -> Result<()> {
         // Load from current directory if no path specified
         playlist.load_directory(std::env::current_dir()?)?;
     }
-    
+
     if args.shuffle {
         playlist.shuffle();
     }
-    
+
     // Create player
     let player = Arc::new(Mutex::new(Player::new()));
     let ui = Arc::new(Mutex::new(UI::new()));
-    
+
     // Start playing if autoplay is enabled
     if args.autoplay && !playlist.is_empty() {
         if let Some(track) = playlist.current() {
@@ -82,10 +73,10 @@ async fn main() -> Result<()> {
             player_lock.play().await?;
         }
     }
-    
+
     // Main event loop
     let result = run_app(&mut terminal, player, ui, &mut playlist).await;
-    
+
     // Restore terminal
     disable_raw_mode()?;
     execute!(
@@ -94,7 +85,7 @@ async fn main() -> Result<()> {
         DisableMouseCapture
     )?;
     terminal.show_cursor()?;
-    
+
     result
 }
 
@@ -120,13 +111,13 @@ async fn run_app(
                 ui_lock.update_current_track(Some(track.clone()));
             }
         }
-        
+
         // Draw UI
         {
             let ui_lock = ui.lock().await;
             terminal.draw(|f| ui_lock.draw(f))?;
         }
-        
+
         // Handle input
         if event::poll(Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
@@ -209,6 +200,6 @@ async fn run_app(
             }
         }
     }
-    
+
     Ok(())
 }

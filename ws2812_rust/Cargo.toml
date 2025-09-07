@@ -1,0 +1,28 @@
+[package]
+name = "ws2812_rust"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "Rust implementation of WS2812 (NeoPixel) driver using SPI"
+license = "Apache-2.0"
+
+[dependencies]
+spidev = "0.6"
+thiserror = "1.0"
+tokio = { version = "1.0", features = ["full"], optional = true }
+
+[features]
+default = ["async"]
+async = ["tokio"]
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[[example]]
+name = "animation"
+path = "examples/animation.rs"
+
+[[example]]
+name = "integration_test"
+path = "examples/integration_test.rs"

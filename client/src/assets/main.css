@@ -29,3 +29,325 @@ a,
     padding: 0;
   }
 }
+
+/* Global Dark/Light Mode Styles */
+
+/* Default light mode styles */
+body,
+.q-layout,
+.q-page {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+.q-card {
+  background-color: #ffffff;
+  color: #1a1a1a;
+  border: 1px solid #e0e0e0;
+}
+
+.text-h6,
+.text-subtitle1 {
+  color: #1a1a1a;
+}
+
+.text-caption {
+  color: #666666;
+}
+
+.q-field {
+  color: #1a1a1a;
+}
+
+.q-field .q-field__control {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+.q-field .q-field__label {
+  color: #666666;
+}
+
+pre { 
+  white-space: pre-wrap;
+  color: #1a1a1a;
+  background-color: #f5f5f5;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  body,
+  .q-layout,
+  .q-page {
+    background-color: #000000;
+    color: #ffffff;
+  }
+
+  .q-card {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: 1px solid #333333;
+  }
+
+  .text-h6,
+  .text-subtitle1 {
+    color: #000000;
+  }
+
+  .text-caption {
+    color: #cccccc;
+  }
+
+  .text-grey-7 {
+    color: #bbbbbb !important;
+  }
+
+  pre {
+    color: #ffffff;
+    background-color: #1a1a1a;
+    border: 1px solid #333333;
+  }
+
+  /* Override Quasar's default button styles in dark mode */
+  .q-btn {
+    color: #ffffff;
+  }
+
+  .q-btn.bg-primary {
+    background-color: #2196f3 !important;
+    color: #ffffff !important;
+  }
+  
+  .q-btn.text-grey-8 {
+    color: #cccccc !important;
+  }
+
+  /* Dark mode slider and progress styles */
+  .q-slider .q-slider__track-container {
+    background-color: #333333;
+  }
+
+  .q-linear-progress {
+    background-color: #333333;
+  }
+
+  /* List item dark mode */
+  .q-item {
+    color: #ffffff;
+  }
+  
+  .q-item.bg-primary {
+    background-color: #2196f3 !important;
+    color: #ffffff !important;
+  }
+
+  /* Input field dark mode */
+  .q-field {
+    color: #ffffff;
+  }
+  
+  .q-field .q-field__control {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+  
+  .q-field .q-field__label {
+    color: #cccccc;
+  }
+
+  /* Force dark background for the main layout container */
+  .q-layout {
+    background-color: #000000 !important;
+  }
+  
+  .q-page-container {
+    background-color: #000000 !important;
+  }
+  
+  .q-page {
+    background-color: #000000 !important;
+  }
+
+  /* Toolbar and header dark mode */
+  .q-toolbar {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+
+  /* Badge dark mode */
+  .q-badge {
+    background-color: #2196f3;
+    color: #ffffff;
+  }
+
+  /* Select dropdown dark mode */
+  .q-select .q-field__control {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+
+  /* Menu and option dark mode */
+  .q-menu {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+
+  .q-item {
+    background-color: #1a1a1a;
+  }
+
+  .q-item:hover {
+    background-color: #333333;
+  }
+
+  /* Separator dark mode */
+  .q-separator {
+    background-color: #333333;
+  }
+
+  /* Icons dark mode */
+  .q-icon {
+    color: #ffffff;
+  }
+
+  /* Scroll area dark mode */
+  .q-scrollarea {
+    background-color: #1a1a1a;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  body,
+  .q-layout,
+  .q-page {
+    background-color: #ffffff;
+    color: #1a1a1a;
+  }
+
+  .q-card {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    border: 1px solid #e0e0e0;
+  }
+
+  .text-h6,
+  .text-subtitle1 {
+    color: #1a1a1a;
+  }
+  
+  .text-caption {
+    color: #666666;
+  }
+
+  pre {
+    color: #1a1a1a;
+    background-color: #f5f5f5;
+  }
+
+  .q-btn {
+    color: #1a1a1a;
+  }
+  
+  .q-btn.bg-primary {
+    background-color: #2196f3 !important;
+    color: #ffffff !important;
+  }
+  
+  .q-btn.text-grey-8 {
+    color: #cccccc !important;
+  }
+
+  .q-slider .q-slider__track-container {
+    background-color: #333333;
+  }
+  
+  
+  .q-linear-progress {
+    background-color: #333333;
+  }
+  
+  .q-item {
+    color: #1a1a1a;
+  }
+  
+  .q-item {
+    color: #1a1a1a;
+  }
+
+  .q-field {
+    color: #1a1a1a;
+  }
+  
+  .q-field .q-field__control {
+    background-color: #ffffff;
+    color: #1a1a1a;
+  }
+
+  .q-field .q-field__label {
+    color: #666666;
+  }
+  
+  
+  .q-layout {
+    background-color: #ffffff !important;
+  }
+  
+  .q-page-container {
+    background-color: #ffffff !important;
+  }
+  
+  .q-page {
+    background-color: #ffffff !important;
+  }
+
+  .q-toolbar {
+    background-color: #ffffff;
+    color: #1a1a1a;
+  }
+
+  .q-badge {
+    background-color: #2196f3;
+    color: #ffffff;
+  }
+
+  .q-select .q-field__control {
+    background-color: #ffffff;
+    color: #1a1a1a;
+  }
+  
+  .q-menu {
+    background-color: #ffffff;
+    color: #1a1a1a;
+  }
+
+  .q-item {
+    background-color: #ffffff;
+  }
+  
+  .q-item:hover {
+    background-color: #f5f5f5;
+  }
+
+  .q-separator {
+    background-color: #e0e0e0;
+  }
+  
+  .q-icon {
+    color: #1a1a1a;
+  }
+
+  .q-scrollarea {
+    background-color: #ffffff;
+  }
+  
+  .q-linear-progress {
+    background-color: #e0e0e0;
+  }
+  
+  .q-item {
+    color: #1a1a1a;
+  }
+  
+}

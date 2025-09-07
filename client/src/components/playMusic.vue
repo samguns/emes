@@ -2,19 +2,19 @@
   <div class="container">
     <h1>🎵 音乐歌单</h1>
     <div class="playlist-grid">
-      <div class="playlist-card sports" @click="goToSports()">
+      <div class="playlist-card sports" @click="goToSports">
         <span class="playlist-icon">🏃‍♂️</span>
         <div class="playlist-title">运动歌单</div>
         <div class="playlist-desc">充满活力的音乐，让你运动更有动力</div>
       </div>
       
-      <div class="playlist-card study" @click="goToStudy()">
+      <div class="playlist-card study" @click="goToStudy">
         <span class="playlist-icon">📚</span>
         <div class="playlist-title">学习歌单</div>
         <div class="playlist-desc">专注学习的背景音乐，提高学习效率</div>
       </div>
       
-      <div class="playlist-card sleep" @click="goToSleep()">
+      <div class="playlist-card sleep" @click="goToSleep">
         <span class="playlist-icon">😴</span>
         <div class="playlist-title">睡前歌单</div>
         <div class="playlist-desc">舒缓的音乐，助你安然入睡</div>
@@ -24,154 +24,29 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+// Define music category constants
+const MUSIC_CATEGORIES = {
+  SLEEP: '0',   // 助眠音乐
+  ACTIVE: '1',  // 活力音乐
+  SPORTS: '2',  // 运动音乐
+  OTHER: '3'    // 其他
+};
+
+// Navigation functions
 function goToSports() {
-  const sportsPage = window.open('', '_blank');
-  sportsPage?.document.write(`
-    <!DOCTYPE html>
-    <html lang="zh-CN">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>运动歌单</title>
-      <style>
-        body {
-          margin: 0;
-          padding: 0;
-          background: linear-gradient(135deg, #f30703 0%, #f15d80 100%);
-          font-family: 'Microsoft YaHei', Arial, sans-serif;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 100vh;
-        }
-        .sports-container {
-          text-align: center;
-          color: white;
-          background: rgba(255, 255, 255, 0.1);
-          padding: 3rem;
-          border-radius: 20px;
-          backdrop-filter: blur(10px);
-          max-width: 500px;
-          width: 90%;
-        }
-        .sports-icon {
-          font-size: 4rem;
-          margin-bottom: 1rem;
-        }
-        .sports-title {
-          font-size: 2rem;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="sports-container">
-        <div class="sports-icon">🏃‍♂️</div>
-        <h1 class="sports-title">运动歌单</h1>
-        <p>正在播放运动音乐...</p>
-      </div>
-    </body>
-    </html>
-  `);
+  router.push(`/player/${MUSIC_CATEGORIES.SPORTS}`);
 }
 
 function goToStudy() {
-  const studyPage = window.open('', '_blank');
-  studyPage?.document.write(`
-    <!DOCTYPE html>
-    <html lang="zh-CN">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>学习歌单</title>
-      <style>
-        body {
-          margin: 0;
-          padding: 0;
-          background: linear-gradient(135deg, #4ecdc4 0%, #6dd5ed 100%);
-          font-family: 'Microsoft YaHei', Arial, sans-serif;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 100vh;
-        }
-        .study-container {
-          text-align: center;
-          color: white;
-          background: rgba(255, 255, 255, 0.1);
-          padding: 3rem;
-          border-radius: 20px;
-          backdrop-filter: blur(10px);
-          max-width: 500px;
-          width: 90%;
-        }
-        .study-icon {
-          font-size: 4rem;
-          margin-bottom: 1rem;
-        }
-        .study-title {
-          font-size: 2rem;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="study-container">
-        <div class="study-icon">📚</div>
-        <h1 class="study-title">学习歌单</h1>
-        <p>正在播放学习音乐...</p>
-      </div>
-    </body>
-    </html>
-  `);
+  router.push(`/player/${MUSIC_CATEGORIES.ACTIVE}`);
 }
 
 function goToSleep() {
-  const sleepPage = window.open('', '_blank');
-  sleepPage?.document.write(`
-    <!DOCTYPE html>
-    <html lang="zh-CN">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>睡前歌单</title>
-      <style>
-        body {
-          margin: 0;
-          padding: 0;
-          background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-          font-family: 'Microsoft YaHei', Arial, sans-serif;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 100vh;
-        }
-        .sleep-container {
-          text-align: center;
-          color: #333;
-          background: rgba(255, 255, 255, 0.7);
-          padding: 3rem;
-          border-radius: 20px;
-          backdrop-filter: blur(10px);
-          max-width: 500px;
-          width: 90%;
-        }
-        .sleep-icon {
-          font-size: 4rem;
-          margin-bottom: 1rem;
-        }
-        .sleep-title {
-          font-size: 2rem;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="sleep-container">
-        <div class="sleep-icon">😴</div>
-        <h1 class="sleep-title">睡前歌单</h1>
-        <p>正在播放舒缓音乐...</p>
-      </div>
-    </body>
-    </html>
-  `);
+  router.push(`/player/${MUSIC_CATEGORIES.SLEEP}`);
 }
 </script>
 
@@ -192,6 +67,8 @@ function goToSleep() {
   max-width: 600px;
   width: 90%;
   margin: 2rem auto;
+  height: 90vh;
+  overflow-y: auto;
 }
 
 h1 {

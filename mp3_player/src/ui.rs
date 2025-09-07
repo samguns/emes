@@ -35,54 +35,64 @@ impl UI {
             show_help: false,
         }
     }
-    
-    pub fn update_player_state(&mut self, is_playing: bool, position: Duration, duration: Option<Duration>, volume: f32) {
+
+    pub fn update_player_state(
+        &mut self,
+        is_playing: bool,
+        position: Duration,
+        duration: Option<Duration>,
+        volume: f32,
+    ) {
         self.is_playing = is_playing;
         self.position = position;
         self.duration = duration;
         self.volume = volume;
     }
-    
+
     pub fn update_playlist(&mut self, playlist: &[Track], current_index: Option<usize>) {
         self.playlist = playlist.to_vec();
         self.current_index = current_index;
     }
-    
+
     pub fn update_current_track(&mut self, track: Option<Track>) {
         self.current_track = track;
     }
-    
+
     pub fn toggle_help(&mut self) {
         self.show_help = !self.show_help;
     }
-    
+
     pub fn draw(&self, frame: &mut Frame) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(1)
             .constraints([
-                Constraint::Length(3),  // Title
-                Constraint::Length(5),  // Now Playing
-                Constraint::Length(3),  // Progress
-                Constraint::Min(5),     // Playlist
-                Constraint::Length(3),  // Controls
+                Constraint::Length(3), // Title
+                Constraint::Length(5), // Now Playing
+                Constraint::Length(3), // Progress
+                Constraint::Min(5),    // Playlist
+                Constraint::Length(3), // Controls
             ])
             .split(frame.area());
-        
+
         self.draw_title(frame, chunks[0]);
         self.draw_now_playing(frame, chunks[1]);
         self.draw_progress(frame, chunks[2]);
         self.draw_playlist(frame, chunks[3]);
         self.draw_controls(frame, chunks[4]);
-        
+
         if self.show_help {
             self.draw_help(frame);
         }
     }
-    
+
     fn draw_title(&self, frame: &mut Frame, area: Rect) {
         let title = Paragraph::new("🎵 MP3 Player")
-            .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+            .style(
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD),
+            )
             .alignment(Alignment::Center)
             .block(
                 Block::default()
@@ -92,63 +102,79 @@ impl UI {
             );
         frame.render_widget(title, area);
     }
-    
+
     fn draw_now_playing(&self, frame: &mut Frame, area: Rect) {
         let mut lines = vec![];
-        
+
         if let Some(ref track) = self.current_track {
             lines.push(Line::from(vec![
                 Span::styled("Now Playing: ", Style::default().fg(Color::Yellow)),
-                Span::styled(&track.name, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    &track.name,
+                    Style::default()
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
             ]));
-            
+
             if let Some(ref artist) = track.artist {
                 lines.push(Line::from(vec![
                     Span::styled("Artist: ", Style::default().fg(Color::Yellow)),
                     Span::raw(artist),
                 ]));
             }
-            
+
             if let Some(ref album) = track.album {
                 lines.push(Line::from(vec![
                     Span::styled("Album: ", Style::default().fg(Color::Yellow)),
                     Span::raw(album),
                 ]));
             }
-            
-            let status = if self.is_playing { "▶ Playing" } else { "⏸ Paused" };
-            let status_color = if self.is_playing { Color::Green } else { Color::Yellow };
-            lines.push(Line::from(Span::styled(status, Style::default().fg(status_color))));
+
+            let status = if self.is_playing {
+                "▶ Playing"
+            } else {
+                "⏸ Paused"
+            };
+            let status_color = if self.is_playing {
+                Color::Green
+            } else {
+                Color::Yellow
+            };
+            lines.push(Line::from(Span::styled(
+                status,
+                Style::default().fg(status_color),
+            )));
         } else {
             lines.push(Line::from(Span::styled(
                 "No track loaded",
                 Style::default().fg(Color::DarkGray),
             )));
         }
-        
-        let now_playing = Paragraph::new(lines)
-            .block(
-                Block::default()
-                    .title("Now Playing")
-                    .borders(Borders::ALL)
-                    .border_type(BorderType::Rounded),
-            );
+
+        let now_playing = Paragraph::new(lines).block(
+            Block::default()
+                .title("Now Playing")
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded),
+        );
         frame.render_widget(now_playing, area);
     }
-    
+
     fn draw_progress(&self, frame: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Length(8),   // Time
-                Constraint::Min(10),     // Progress bar
-                Constraint::Length(8),   // Duration
-                Constraint::Length(15),  // Volume
+                Constraint::Length(8),  // Time
+                Constraint::Min(10),    // Progress bar
+                Constraint::Length(8),  // Duration
+                Constraint::Length(15), // Volume
             ])
             .split(area);
-        
+
         // Time display
-        let time = format!("{:02}:{:02}", 
+        let time = format!(
+            "{:02}:{:02}",
             self.position.as_secs() / 60,
             self.position.as_secs() % 60
         );
@@ -156,7 +182,7 @@ impl UI {
             .alignment(Alignment::Center)
             .block(Block::default().borders(Borders::LEFT | Borders::TOP | Borders::BOTTOM));
         frame.render_widget(time_widget, chunks[0]);
-        
+
         // Progress bar
         let progress = if let Some(duration) = self.duration {
             if duration.as_secs() > 0 {
@@ -167,16 +193,17 @@ impl UI {
         } else {
             0.0
         };
-        
+
         let progress_bar = Gauge::default()
             .block(Block::default().borders(Borders::TOP | Borders::BOTTOM))
             .gauge_style(Style::default().fg(Color::Cyan))
             .ratio(progress);
         frame.render_widget(progress_bar, chunks[1]);
-        
+
         // Duration display
         let duration = if let Some(duration) = self.duration {
-            format!("{:02}:{:02}", 
+            format!(
+                "{:02}:{:02}",
                 duration.as_secs() / 60,
                 duration.as_secs() % 60
             )
@@ -187,7 +214,7 @@ impl UI {
             .alignment(Alignment::Center)
             .block(Block::default().borders(Borders::RIGHT | Borders::TOP | Borders::BOTTOM));
         frame.render_widget(duration_widget, chunks[2]);
-        
+
         // Volume
         let volume_text = format!("Vol: {}%", (self.volume * 100.0) as u32);
         let volume_widget = Paragraph::new(volume_text)
@@ -195,9 +222,10 @@ impl UI {
             .block(Block::default().borders(Borders::ALL));
         frame.render_widget(volume_widget, chunks[3]);
     }
-    
+
     fn draw_playlist(&self, frame: &mut Frame, area: Rect) {
-        let items: Vec<ListItem> = self.playlist
+        let items: Vec<ListItem> = self
+            .playlist
             .iter()
             .enumerate()
             .map(|(i, track)| {
@@ -206,18 +234,19 @@ impl UI {
                 } else {
                     "  "
                 };
-                
+
                 let style = if Some(i) == self.current_index {
-                    Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)
+                    Style::default()
+                        .fg(Color::Green)
+                        .add_modifier(Modifier::BOLD)
                 } else {
                     Style::default()
                 };
-                
-                ListItem::new(format!("{}{}", prefix, track.name))
-                    .style(style)
+
+                ListItem::new(format!("{}{}", prefix, track.name)).style(style)
             })
             .collect();
-        
+
         let playlist = List::new(items)
             .block(
                 Block::default()
@@ -231,10 +260,10 @@ impl UI {
                     .add_modifier(Modifier::BOLD),
             )
             .highlight_symbol("> ");
-        
+
         frame.render_widget(playlist, area);
     }
-    
+
     fn draw_controls(&self, frame: &mut Frame, area: Rect) {
         let controls = vec![
             ("Space", "Play/Pause"),
@@ -247,7 +276,7 @@ impl UI {
             ("h", "Help"),
             ("q", "Quit"),
         ];
-        
+
         let control_text: Vec<Span> = controls
             .iter()
             .flat_map(|(key, action)| {
@@ -257,7 +286,7 @@ impl UI {
                 ]
             })
             .collect();
-        
+
         let controls_widget = Paragraph::new(Line::from(control_text))
             .block(
                 Block::default()
@@ -265,16 +294,19 @@ impl UI {
                     .border_type(BorderType::Rounded),
             )
             .alignment(Alignment::Center);
-        
+
         frame.render_widget(controls_widget, area);
     }
-    
+
     fn draw_help(&self, frame: &mut Frame) {
         let help_text = vec![
             Line::from(""),
-            Line::from(vec![
-                Span::styled("Keyboard Shortcuts", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-            ]),
+            Line::from(vec![Span::styled(
+                "Keyboard Shortcuts",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )]),
             Line::from(""),
             Line::from(vec![
                 Span::styled("Space      ", Style::default().fg(Color::Cyan)),
@@ -313,11 +345,12 @@ impl UI {
                 Span::raw("Quit application"),
             ]),
             Line::from(""),
-            Line::from(vec![
-                Span::styled("Press any key to close this help", Style::default().fg(Color::DarkGray)),
-            ]),
+            Line::from(vec![Span::styled(
+                "Press any key to close this help",
+                Style::default().fg(Color::DarkGray),
+            )]),
         ];
-        
+
         let help = Paragraph::new(help_text)
             .block(
                 Block::default()
@@ -327,7 +360,7 @@ impl UI {
                     .border_style(Style::default().fg(Color::Yellow)),
             )
             .alignment(Alignment::Left);
-        
+
         let area = centered_rect(60, 60, frame.area());
         frame.render_widget(help, area);
     }

@@ -1,34 +1,41 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
 import ChatInterface from './ChatInterface.vue';
 import ToolExplorer from './ToolExplorer.vue';
 import ResourceBrowser from './ResourceBrowser.vue';
-import playMusic from './playMusic.vue';
 
-// 控制playMusic组件的显示
-const showPlayMusic = ref(false);
+// 路由实例
+const router = useRouter();
+
 
 function handleClickPlayMusic() {
-  if (!showPlayMusic.value) {
-    showPlayMusic.value = true;
-  } else {
-    showPlayMusic.value = false;
-  }
+  router.push('/play-music');
+}
+
+// 处理Action 2点击事件，跳转到上传页面
+function handleClickUpload() {
+  router.push('/upload');
+}
+
+// 处理Action 3点击事件，跳转到分类页面
+function handleClickClassification() {
+  router.push('/classification');
 }
 
 // State
-const activeTab = ref<'chat' | 'tools' | 'resources'>('chat');
+//const activeTab = ref<'chat' | 'tools' | 'resources'>('chat');
 
 // Methods
-function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
-  activeTab.value = tab;
-}
+// function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
+//   activeTab.value = tab;
+// }
 </script>
 
 <template>
   <div class="dashboard">
     <div class="dashboard-header">
-      <h1>宸宝的智能助手</h1>
+      <h1>智能助手</h1>
     </div>
 
     <div class="dashboard-content">
@@ -37,16 +44,16 @@ function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
         <!-- <h2>Quick Actions</h2> -->
         <div class="action-buttons">
           <button class="action-button" @click="handleClickPlayMusic">播放音乐</button>
-          <button class="action-button">Action 2</button>
-          <button class="action-button">Action 3</button>
+          <button class="action-button" @click="handleClickUpload">上传音乐</button>
+          <button class="action-button" @click="handleClickClassification">AI分类</button>
         </div>
       </div>
     </div>
 
-    <!-- 播放音乐组件 -->
-    <div v-if="showPlayMusic" class="music-container">
+    <!-- 音乐播放组件已移除，改为路由导航 -->
+    <!-- <div v-if="showPlayMusic" class="music-container">
       <playMusic />
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -126,7 +133,7 @@ function setActiveTab(tab: 'chat' | 'tools' | 'resources') {
 }
 
 .action-button {
-  background-color: var(--color-primary);
+  /* background-color: var(--color-primary); */
   /* color: white; */
   border: none;
   border-radius: 4px;
