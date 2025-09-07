@@ -1,9 +1,11 @@
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
+use serde::{Deserialize, Serialize};
 use tokio_util::sync::CancellationToken;
 
 use crate::app_state::AppState;
+use crate::dao::player_led_dao;
 use crate::ws2812::{Color, SpiConfig, Ws2812};
 
 struct Inner {
@@ -41,22 +43,20 @@ impl Ws2812StripTask {
         let event_chan_sender = self.app_state.led_strip_state.get_event_chan_sender();
         let mut event_chan_receiver = event_chan_sender.subscribe();
 
-        {
-            let mut inner = self.inner.write().unwrap();
-            // inner
-            //     .strip
-            //     .start_chase(Color::blue().scale(0.3), 1.0, false)
-            //     .unwrap();
-            inner
-                .strip
-                .start_breathe(Color::blue().scale(0.2), 0.2)
-                .unwrap();
-        }
+        // self.init_strip().await;
 
         while !shutdown_token.is_cancelled() {
             tokio::select! {
-                _ = event_chan_receiver.recv() => {
-                    tracing::info!("Received event from led strip");
+                event = event_chan_receiver.recv() => {
+                    match event {
+                        Ok(event) => {
+                            tracing::info!("Received event from led strip: {}", event);
+                            self.handle_event(&event).await;
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to receive event from led strip: {}", e);
+                        }
+                    }
                 },
                 _ = shutdown_token.cancelled() => {
                     tracing::info!("Shutting down led strip task");
@@ -68,4 +68,65 @@ impl Ws2812StripTask {
             }
         }
     }
+
+    async fn init_strip(&self) {
+        let player_led_dao = player_led_dao::PlayerLedDao::new(&self.app_state.db_state).await;
+        let led_strip = player_led_dao.get_led_strip_status().await;
+        if led_strip.is_err() {
+            return;
+        }
+
+        let led_strip = led_strip.unwrap();
+        let led_color = Color::new(led_strip.red, led_strip.green, led_strip.blue);
+        let led_scale = led_strip.scale;
+        let led_frequency = led_strip.frequency;
+
+        let mut inner = self.inner.write().unwrap();
+        inner
+            .strip
+            .set_leds(&[led_color.scale(led_scale as f32)])
+            .unwrap();
+        inner
+            .strip
+            .start_breathe(led_color.scale(led_scale as f32), led_frequency as f32)
+            .unwrap();
+    }
+
+    async fn handle_event(&self, event_str: &str) {
+        let event = match serde_json::from_str::<SetLedStripStatusEvent>(event_str) {
+            Ok(event) => event,
+            Err(e) => {
+                tracing::error!("Failed to deserialize event: {}", e);
+                return;
+            }
+        };
+
+        if !event.enable {
+            let mut inner = self.inner.write().unwrap();
+            inner.strip.stop_animation();
+            let _ = inner.strip.clear();
+            return;
+        }
+
+        let led_strip = event.status.unwrap();
+        let led_color = Color::new(led_strip.red, led_strip.green, led_strip.blue);
+        let led_scale = led_strip.scale;
+        let led_frequency = led_strip.frequency;
+
+        let mut inner = self.inner.write().unwrap();
+        inner
+            .strip
+            .set_leds(&[led_color.scale(led_scale as f32)])
+            .unwrap();
+        inner
+            .strip
+            .start_breathe(led_color.scale(led_scale as f32), led_frequency as f32)
+            .unwrap();
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SetLedStripStatusEvent {
+    pub enable: bool,
+    pub status: Option<player_led_dao::PlayerLedEntry>,
 }

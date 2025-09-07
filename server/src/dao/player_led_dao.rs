@@ -69,7 +69,6 @@ impl PlayerLedDao {
         let count: i64 = check_query.unwrap().get::<i64, _>("COUNT(*)");
         // If the led strip does not exist, create it
         if count == 0 {
-            tracing::error!("Led strip does not exist, creating it");
             let insert_query = sqlx::query("INSERT INTO player_led (id, frequency, scale, red, green, blue) VALUES (?, ?, ?, ?, ?, ?)")
                 .bind(req.id)
                 .bind(req.frequency)
@@ -90,8 +89,6 @@ impl PlayerLedDao {
 
             return Ok(());
         }
-
-        tracing::info!("Led strip exists, updating it");
 
         let update_query = sqlx::query("UPDATE player_led SET frequency = ?, scale = ?, red = ?, green = ?, blue = ? WHERE id = ?")
             .bind(req.frequency)
@@ -147,7 +144,7 @@ impl PlayerLedDao {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct PlayerLedEntry {
     pub id: i64,
     pub frequency: f64,

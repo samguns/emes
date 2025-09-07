@@ -1,4 +1,5 @@
 use crate::api::utils::{FailureResponse, SuccessResponse};
+use crate::ws2812::SetLedStripStatusEvent;
 use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -9,6 +10,7 @@ use serde_json::json;
 use std::sync::Arc;
 
 use crate::app_state::AppState;
+use crate::dao::player_led_dao;
 use crate::player::{PlayerStatus, Track};
 
 #[derive(Debug, Deserialize)]
@@ -38,6 +40,14 @@ pub async fn stop(state: State<Arc<AppState>>) -> Result<SuccessResponse<()>, Pl
         return Err(PlayError::InternalError);
     }
 
+    let event_chan_sender = state.led_strip_state.get_event_chan_sender();
+    let event_str = json!(SetLedStripStatusEvent {
+        enable: false,
+        status: None,
+    })
+    .to_string();
+    let _ = event_chan_sender.send(event_str);
+
     Ok(SuccessResponse::new((), "Success"))
 }
 
@@ -48,6 +58,16 @@ pub async fn toggle(state: State<Arc<AppState>>) -> Result<SuccessResponse<()>, 
         return Err(PlayError::InternalError);
     }
 
+    if player.is_paused() {
+        let event_chan_sender = state.led_strip_state.get_event_chan_sender();
+        let event_str = json!(SetLedStripStatusEvent {
+            enable: false,
+            status: None,
+        })
+        .to_string();
+        let _ = event_chan_sender.send(event_str);
+    }
+
     Ok(SuccessResponse::new((), "Success"))
 }
 
@@ -55,13 +75,32 @@ pub async fn status(
     state: State<Arc<AppState>>,
 ) -> Result<SuccessResponse<PlayerStatus>, PlayError> {
     let player = state.player_state.get_music_player();
-    match player.status() {
-        Ok(status) => Ok(SuccessResponse::new(status, "Success")),
+    let mut status = match player.status() {
+        Ok(status) => status,
         Err(e) => {
             tracing::error!("Failed to get status: {}", e);
-            Err(PlayError::InternalError)
+            PlayerStatus {
+                paused: true,
+                position: None,
+                position_sec: None,
+                duration: None,
+                duration_sec: None,
+                volume: 0.0,
+                current_track: None,
+                track: None,
+            }
         }
+    };
+
+    let led_strip_dao = player_led_dao::PlayerLedDao::new(&state.db_state).await;
+    let led_strip = led_strip_dao.get_led_strip_status().await;
+    if led_strip.is_err() {
+        return Err(PlayError::DatabaseError);
     }
+    let led_strip = led_strip.unwrap();
+    status.volume = led_strip.scale as f32;
+
+    Ok(SuccessResponse::new(status, "Success"))
 }
 
 #[derive(Debug, Deserialize)]

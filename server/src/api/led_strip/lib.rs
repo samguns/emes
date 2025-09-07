@@ -1,4 +1,5 @@
 use crate::api::utils::{FailureResponse, SuccessResponse};
+use crate::ws2812::SetLedStripStatusEvent;
 use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -33,6 +34,14 @@ pub async fn set_led_strip_status(
     if led_strip.is_err() {
         return Err(LedStripError::DatabaseError);
     }
+
+    let event_chan_sender = state.led_strip_state.get_event_chan_sender();
+    let event_str = json!(SetLedStripStatusEvent {
+        enable: true,
+        status: Some(req.clone()),
+    })
+    .to_string();
+    let _ = event_chan_sender.send(event_str);
 
     Ok(SuccessResponse::new((), "Success"))
 }

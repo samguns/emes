@@ -197,6 +197,22 @@ impl MusicPlayer {
         Ok(())
     }
 
+    pub fn is_paused(&self) -> bool {
+        let inner = self.inner.lock();
+        match inner {
+            Ok(inner) => {
+                if let Some(ref sink) = inner.sink {
+                    return sink.is_paused();
+                } else {
+                    return true;
+                }
+            }
+            Err(_) => {
+                return true;
+            }
+        }
+    }
+
     pub fn seek(&self, delta: f32) -> Result<()> {
         let inner = self
             .inner
@@ -426,14 +442,14 @@ impl MusicPlayer {
 
 #[derive(Debug, Serialize)]
 pub struct PlayerStatus {
-    paused: bool,
-    position: Option<String>,
-    position_sec: Option<u64>,
-    duration: Option<String>,
-    duration_sec: Option<u64>,
-    volume: f32,
-    current_track: Option<String>,
-    track: Option<u64>,
+    pub paused: bool,
+    pub position: Option<String>,
+    pub position_sec: Option<u64>,
+    pub duration: Option<String>,
+    pub duration_sec: Option<u64>,
+    pub volume: f32,
+    pub current_track: Option<String>,
+    pub track: Option<u64>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

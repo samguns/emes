@@ -62,6 +62,22 @@
                 <!-- <q-btn color="grey-8" dense outline label="-5s" @click="seek(-5)" /> -->
                 <q-btn color="grey-8" dense outline label="+5s" @click="seek(5)" />
                 <q-separator vertical class="q-mx-md" />
+                <q-btn color="grey-8" dense label="LED设置" @click="showColorPicker = true" />
+                <q-dialog v-model="showColorPicker">
+                  <q-card>
+                    <q-card-section>
+                      <q-color
+                        v-model="ledColor"
+                        no-header
+                        no-footer
+                        />
+                    </q-card-section>
+                    <q-card-actions align="right">
+                      <q-btn flat label="设置" color="primary" @click="setLedColor" />
+                      <q-btn flat label="关闭" color="primary" v-close-popup />
+                    </q-card-actions>
+                  </q-card>
+                </q-dialog>
                 <div class="row items-center">
                   <q-icon name="volume_up" class="q-mr-sm" />
                   <q-slider
@@ -137,6 +153,66 @@ const props = defineProps({
   class: { type: String, default: '' }
 });
 
+// LED Strip status and controls
+const ledStripStatus = reactive({
+  id: 0,
+  frequency: 0,
+  scale: 0,
+  red: 0,
+  green: 0,
+  blue: 0
+});
+const ledStripLoading = ref(false);
+const ledStripError = ref<string | null>(null);
+
+const showColorPicker = ref(false);
+const ledColor = ref('rgb(0, 0, 0)');
+
+async function fetchLedStripStatus() {
+  ledStripLoading.value = true;
+  ledStripError.value = null;
+  try {
+    const resp = await api.get('/api/led-strip/status');
+    if (resp.data && resp.data.data) {
+      Object.assign(ledStripStatus, resp.data.data);
+    }
+
+    ledColor.value = `rgb(${ledStripStatus.red}, ${ledStripStatus.green}, ${ledStripStatus.blue})`;
+
+    status.volume = ledStripStatus.scale * 100.0;
+  } catch (e: any) {
+    ledStripError.value = e?.message || 'Failed to fetch LED strip status';
+  } finally {
+    ledStripLoading.value = false;
+  }
+}
+
+async function setLedColor() {
+  // console.log(ledColor.value);
+  // Extract the RGB values from the color string
+  ledStripStatus.red = parseInt(ledColor.value.split('(')[1].split(',')[0]);
+  ledStripStatus.green = parseInt(ledColor.value.split('(')[1].split(',')[1]);
+  ledStripStatus.blue = parseInt(ledColor.value.split('(')[1].split(',')[2]);
+  if (!status.paused) {
+    await setLedStripStatus();
+  }
+}
+
+async function setLedStripStatus() {
+  ledStripLoading.value = true;
+  ledStripError.value = null;
+  try {
+    await api.post('/api/led-strip/status', { ...ledStripStatus });
+    // Optionally refetch to confirm
+    await fetchLedStripStatus();
+  } catch (e: any) {
+    ledStripError.value = e?.message || 'Failed to set LED strip status';
+  } finally {
+    ledStripLoading.value = false;
+  }
+}
+
+
 type PlayerOpt = { label: string; value: number | null };
 
 const status = reactive<any>({
@@ -199,7 +275,7 @@ async function refresh() {
     Object.assign(status, data['data']);
     // sync sliders
     scrubSeconds.value = Number(status.position_sec || 0);
-    volumePercent.value = Math.round(Number(status.volume || 1) * 100);
+    volumePercent.value = Math.round(Number(status.volume || 0) * 100);
     selectedPlayer.value = status.player ?? null;
   } finally {
     loading.value = false;
@@ -250,6 +326,7 @@ async function play(index?: number) {
 
   try {
     await api.post('/api/player/play', payload);
+    await setLedStripStatus();
   } catch (error) {
     console.error(error);
   }
@@ -287,6 +364,12 @@ async function setVolumePercent() {
   try {
     await api.post('/api/player/volume', payload);
     status.volume = value * 100.0;
+
+    if (!status.paused) {
+      ledStripStatus.scale = value;
+      await setLedStripStatus();
+    }
+
   } catch (error) {
     console.error(error);
   }
@@ -316,6 +399,7 @@ async function setPlayer() {
 
 onMounted(async () => {
   await get_playlist();
+  await fetchLedStripStatus();
   // await refresh();
   // await listPlayer();
   pollTimer.value = window.setInterval(refresh, 1000);
